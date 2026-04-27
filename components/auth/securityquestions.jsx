@@ -1,123 +1,214 @@
-import { useState } from 'react';
-import Button from '../common/Button';
-import Card from '../common/Card';
-import Input from '../common/Input';
-import { ShieldCheckIcon } from '@heroicons/react/24/outline';
+import React, { useState, useEffect } from 'react';
 
-const SecurityQuestions = ({ onSubmit, onSkip }) => {
-  const [questions, setQuestions] = useState({
-    q1: '',
-    q2: ''
-  });
+const SecurityQuestions = ({ onComplete, userId }) => {
+  const [questions, setQuestions] = useState([
+    { id: 1, text: 'What was your first pet\'s name?' },
+    { id: 2, text: 'What is your mother\'s maiden name?' },
+    { id: 3, text: 'What city were you born in?' },
+    { id: 4, text: 'What was your first car?' },
+    { id: 5, text: 'What is your favorite book?' },
+    { id: 6, text: 'What elementary school did you attend?' },
+    { id: 7, text: 'What is your favorite movie?' },
+    { id: 8, text: 'What is your dream job?' }
+  ]);
+  
+  const [selectedQuestions, setSelectedQuestions] = useState([]);
+  const [answers, setAnswers] = useState({});
+  const [setupMode, setSetupMode] = useState(true);
+  const [verificationMode, setVerificationMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const questionOptions = [
-    "What was your first school's name?",
-    "What is your mother's maiden name?",
-    "What was your first pet's name?",
-    "What city were you born in?",
-    "What is your favorite book?",
-    "What is your favorite movie?",
-    "What was your childhood nickname?",
-    "What is your favorite food?"
-  ];
+  useEffect(() => {
+    // Check if user already has security questions set up
+    checkExistingQuestions();
+  }, [userId]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!questions.q1 || !questions.q2) {
-      alert('Please answer both questions');
-      return;
+  const checkExistingQuestions = async () => {
+    try {
+      // Simulate API call to check if user has security questions
+      const hasQuestions = localStorage.getItem(`security_questions_${userId}`);
+      if (hasQuestions) {
+        setSetupMode(false);
+      }
+    } catch (error) {
+      console.error('Error checking security questions:', error);
     }
-    onSubmit(questions);
   };
 
-  return (
-    <Card>
-      <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-primary-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-          <ShieldCheckIcon className="w-8 h-8 text-primary-600" />
-        </div>
-        <h3 className="text-xl font-bold text-gray-800">Security Questions</h3>
-        <p className="text-gray-600 text-sm mt-1">
-          These will be used for emergency access
-        </p>
+  const handleSelectQuestion = (questionId) => {
+    if (selectedQuestions.includes(questionId)) {
+      setSelectedQuestions(selectedQuestions.filter(id => id !== questionId));
+    } else if (selectedQuestions.length < 3) {
+      setSelectedQuestions([...selectedQuestions, questionId]);
+    }
+  };
+
+  const handleAnswerChange = (questionId, answer) => {
+    setAnswers({
+      ...answers,
+      [questionId]: answer
+    });
+  };
+
+  const handleSetupSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (selectedQuestions.length !== 3) {
+      setError('Please select 3 security questions');
+      return;
+    }
+
+    // Check if all selected questions have answers
+    for (const qId of selectedQuestions) {
+      if (!answers[qId] || answers[qId].trim() === '') {
+        setError('Please answer all selected questions');
+        return;
+      }
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Prepare data for submission
+      const securityData = selectedQuestions.map(qId => ({
+        questionId: qId,
+        question: questions.find(q => q.id === qId).text,
+        answer: answers[qId]
+      }));
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Store in localStorage (in real app, send to backend)
+      localStorage.setItem(`security_questions_${userId}`, JSON.stringify(securityData));
+      
+      setSetupMode(false);
+      if (onComplete) onComplete(true);
+    } catch (error) {
+      setError('Failed to save security questions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerificationSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Check if all questions have answers
+    const storedData = JSON.parse(localStorage.getItem(`security_questions_${userId}`));
+    for (const q of storedData) {
+      if (!answers[q.questionId] || answers[q.questionId].trim() === '') {
+        setError('Please answer all questions');
+        return;
+      }
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      // Verify answers
+      const storedData = JSON.parse(localStorage.getItem(`security_questions_${userId}`));
+      let isValid = true;
+      
+      for (const q of storedData) {
+        if (answers[q.questionId].toLowerCase() !== q.answer.toLowerCase()) {
+          isValid = false;
+          break;
+        }
+      }
+
+      if (isValid) {
+        if (onComplete) onComplete(true);
+      } else {
+        setError('One or more answers are incorrect');
+      }
+    } catch (error) {
+      setError('Failed to verify answers');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderSetupMode = () => (
+    <form onSubmit={handleSetupSubmit}>
+      <div className="questions-list">
+        <h3>Select 3 security questions</h3>
+        <p className="instruction">Choose questions that are easy for you to remember but hard for others to guess</p>
+        
+        {questions.map(question => (
+          <div key={question.id} className="question-item">
+            <label className="question-checkbox">
+              <input
+                type="checkbox"
+                checked={selectedQuestions.includes(question.id)}
+                onChange={() => handleSelectQuestion(question.id)}
+                disabled={!selectedQuestions.includes(question.id) && selectedQuestions.length >= 3}
+              />
+              <span>{question.text}</span>
+            </label>
+            
+            {selectedQuestions.includes(question.id) && (
+              <div className="answer-input">
+                <input
+                  type="text"
+                  placeholder="Your answer"
+                  value={answers[question.id] || ''}
+                  onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+        ))}
       </div>
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Question 1
-          </label>
-          <select
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary-500 focus:outline-none"
-            onChange={(e) => setQuestions({ ...questions, q1: e.target.value })}
-            value={questions.q1}
-          >
-            <option value="">Select a question</option>
-            {questionOptions.map((q, i) => (
-              <option key={i} value={q}>{q}</option>
-            ))}
-          </select>
-        </div>
-
-        <Input
-          label="Your Answer"
-          placeholder="Enter your answer"
-          onChange={(e) => setQuestions({ ...questions, a1: e.target.value })}
-        />
-
-        <div className="border-t border-gray-200 my-4"></div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Question 2
-          </label>
-          <select
-            className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-primary-500 focus:outline-none"
-            onChange={(e) => setQuestions({ ...questions, q2: e.target.value })}
-            value={questions.q2}
-          >
-            <option value="">Select a question</option>
-            {questionOptions.map((q, i) => (
-              <option key={i} value={q}>{q}</option>
-            ))}
-          </select>
-        </div>
-
-        <Input
-          label="Your Answer"
-          placeholder="Enter your answer"
-          onChange={(e) => setQuestions({ ...questions, a2: e.target.value })}
-        />
-
-        <div className="bg-warning/10 p-4 rounded-lg">
-          <p className="text-sm text-warning">
-            <ShieldCheckIcon className="w-4 h-4 inline mr-1" />
-            These answers cannot be changed later. Store them safely.
-          </p>
-        </div>
-
-        <div className="flex gap-3 pt-4">
-          {onSkip && (
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={onSkip}
-            >
-              Skip for now
-            </Button>
-          )}
-          <Button
-            type="submit"
-            variant="primary"
-            className={onSkip ? "flex-1" : "w-full"}
-          >
-            Save Answers
-          </Button>
-        </div>
-      </form>
-    </Card>
+      
+      {error && <div className="error-message">{error}</div>}
+      
+      <button type="submit" disabled={loading} className="submit-button">
+        {loading ? 'Saving...' : 'Save Security Questions'}
+      </button>
+    </form>
   );
+
+  const renderVerificationMode = () => {
+    const storedData = JSON.parse(localStorage.getItem(`security_questions_${userId}`));
+    
+    return (
+      <form onSubmit={handleVerificationSubmit}>
+        <div className="questions-list">
+          <h3>Verify Your Identity</h3>
+          <p className="instruction">Please answer your security questions to verify your identity</p>
+          
+          {storedData.map(({ questionId, question }) => (
+            <div key={questionId} className="verification-item">
+              <label className="question-label">{question}</label>
+              <input
+                type="text"
+                placeholder="Your answer"
+                value={answers[questionId] || ''}
+                onChange={(e) => handleAnswerChange(questionId, e.target.value)}
+                className="verification-input"
+              />
+            </div>
+          ))}
+        </div>
+        
+        {error && <div className="error-message">{error}</div>}
+        
+        <button type="submit" disabled={loading} className="submit-button">
+          {loading ? 'Verifying...' : 'Verify Identity'}
+        </button>
+      </form>
+    );
+  };
+
+  if (!setupMode) {
+    return renderVerificationMode();
+  }
+
+  return renderSetupMode();
 };
 
 export default SecurityQuestions;
