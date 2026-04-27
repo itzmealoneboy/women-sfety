@@ -1,1156 +1,269 @@
-# `web-vitals`
+# validator.js
+[![NPM version][npm-image]][npm-url]
+[![CI][ci-image]][ci-url]
+[![Coverage][codecov-image]][codecov-url]
+[![Downloads][downloads-image]][npm-url]
+[![Backers on Open Collective](https://opencollective.com/validatorjs/backers/badge.svg)](#backers)
+[![Sponsors on Open Collective](https://opencollective.com/validatorjs/sponsors/badge.svg)](#sponsors)
+[![License](https://img.shields.io/badge/License-MIT-red.svg)](https://github.com/alguerocode/validator.js/blob/master/LICENSE)
+[![Gitter][gitter-image]][gitter-url]
 
-- [Overview](#overview)
-- [Install and load the library](#installation)
-  - [From npm](#import-web-vitals-from-npm)
-  - [From a CDN](#load-web-vitals-from-a-cdn)
-- [Usage](#usage)
-  - [Basic usage](#basic-usage)
-  - [Report the value on every change](#report-the-value-on-every-change)
-  - [Report only the delta of changes](#report-only-the-delta-of-changes)
-  - [Send the results to an analytics endpoint](#send-the-results-to-an-analytics-endpoint)
-  - [Send the results to Google Analytics](#send-the-results-to-google-analytics)
-  - [Send the results to Google Tag Manager](#send-the-results-to-google-tag-manager)
-  - [Send attribution data](#send-attribution-data)
-  - [Batch multiple reports together](#batch-multiple-reports-together)
-- [Build options](#build-options)
-  - [Which build is right for you?](#which-build-is-right-for-you)
-- [API](#api)
-  - [Types](#types)
-  - [Functions](#functions)
-  - [Rating Thresholds](#rating-thresholds)
-  - [Attribution](#attribution)
-- [Browser Support](#browser-support)
-- [Limitations](#limitations)
-- [Development](#development)
-- [Integrations](#integrations)
-- [License](#license)
+A library of string validators and sanitizers.
 
-## Overview
+## Strings only
 
-The `web-vitals` library is a tiny (~2K, brotli'd), modular library for measuring all the [Web Vitals](https://web.dev/articles/vitals) metrics on real users, in a way that accurately matches how they're measured by Chrome and reported to other Google tools (e.g. [Chrome User Experience Report](https://developers.google.com/web/tools/chrome-user-experience-report), [Page Speed Insights](https://developers.google.com/speed/pagespeed/insights/), [Search Console's Speed Report](https://webmasters.googleblog.com/2019/11/search-console-speed-report.html)).
+**This library validates and sanitizes strings only.**
 
-The library supports all of the [Core Web Vitals](https://web.dev/articles/vitals#core_web_vitals) as well as a number of other metrics that are useful in diagnosing [real-user](https://web.dev/articles/user-centric-performance-metrics) performance issues.
+If you're not sure if your input is a string, coerce it using `input + ''`.
+Passing anything other than a string will result in an error.
 
-### Core Web Vitals
+## Installation and Usage
 
-- [Cumulative Layout Shift (CLS)](https://web.dev/articles/cls)
-- [Interaction to Next Paint (INP)](https://web.dev/articles/inp)
-- [Largest Contentful Paint (LCP)](https://web.dev/articles/lcp)
+### Server-side usage
 
-### Other metrics
-
-- [First Contentful Paint (FCP)](https://web.dev/articles/fcp)
-- [Time to First Byte (TTFB)](https://web.dev/articles/ttfb)
-- [First Input Delay (FID)](https://web.dev/articles/fid)
-
-> [!CAUTION]
-> FID is deprecated and will be removed in the next major release.
-
-<a name="installation"><a>
-<a name="load-the-library"><a>
-
-## Install and load the library
-
-<a name="import-web-vitals-from-npm"><a>
-
-The `web-vitals` library uses the `buffered` flag for [PerformanceObserver](https://developer.mozilla.org/docs/Web/API/PerformanceObserver/observe), allowing it to access performance entries that occurred before the library was loaded.
-
-This means you do not need to load this library early in order to get accurate performance data. In general, this library should be deferred until after other user-impacting code has loaded.
-
-### From npm
-
-You can install this library from npm by running:
+Install the `validator` package as:
 
 ```sh
-npm install web-vitals
+npm i validator
+yarn add validator
+pnpm i validator
 ```
 
-> [!NOTE]
-> If you're not using npm, you can still load `web-vitals` via `<script>` tags from a CDN like [unpkg.com](https://unpkg.com). See the [load `web-vitals` from a CDN](#load-web-vitals-from-a-cdn) usage example below for details.
+#### No ES6
 
-There are a few different builds of the `web-vitals` library, and how you load the library depends on which build you want to use.
+```javascript
+var validator = require('validator');
 
-For details on the difference between the builds, see <a href="#which-build-is-right-for-you">which build is right for you</a>.
-
-**1. The "standard" build**
-
-To load the "standard" build, import modules from the `web-vitals` package in your application code (as you would with any npm package and node-based build tool):
-
-```js
-import {onLCP, onINP, onCLS} from 'web-vitals';
-
-onCLS(console.log);
-onINP(console.log);
-onLCP(console.log);
+validator.isEmail('foo@bar.com'); //=> true
 ```
 
-> [!NOTE]
-> In version 2, these functions were named `getXXX()` rather than `onXXX()`. They've [been renamed](https://github.com/GoogleChrome/web-vitals/pull/222) in version 3 to reduce confusion (see [#217](https://github.com/GoogleChrome/web-vitals/pull/217) for details) and will continue to be available using the `getXXX()` until at least version 4. Users are encouraged to switch to the new names, though, for future compatibility.
+#### ES6
 
-<a name="attribution-build"><a>
-
-**2. The "attribution" build**
-
-Measuring the Web Vitals scores for your real users is a great first step toward optimizing the user experience. But if your scores aren't _good_, the next step is to understand why they're not good and work to improve them.
-
-The "attribution" build helps you do that by including additional diagnostic information with each metric to help you identify the root cause of poor performance as well as prioritize the most important things to fix.
-
-The "attribution" build is slightly larger than the "standard" build (by about 600 bytes, brotli'd), so while the code size is still small, it's only recommended if you're actually using these features.
-
-To load the "attribution" build, change any `import` statements that reference `web-vitals` to `web-vitals/attribution`:
-
-```diff
-- import {onLCP, onINP, onCLS} from 'web-vitals';
-+ import {onLCP, onINP, onCLS} from 'web-vitals/attribution';
+```javascript
+import validator from 'validator';
 ```
 
-Usage for each of the imported function is identical to the standard build, but when importing from the attribution build, the [metric](#metric) objects will contain an additional [`attribution`](#attribution) property.
+Or, import only a subset of the library:
 
-See [Send attribution data](#send-attribution-data) for usage examples, and the [`attribution` reference](#attribution) for details on what values are added for each metric.
+```javascript
+import isEmail from 'validator/lib/isEmail';
+```
 
-<a name="load-web-vitals-from-a-cdn"><a>
+#### Tree-shakeable ES imports
 
-### From a CDN
+```javascript
+import isEmail from 'validator/es/lib/isEmail';
+```
 
-The recommended way to use the `web-vitals` package is to install it from npm and integrate it into your build process. However, if you're not using npm, it's still possible to use `web-vitals` by requesting it from a CDN that serves npm package files.
+### Client-side usage
 
-The following examples show how to load `web-vitals` from [unpkg.com](https://unpkg.com/browse/web-vitals/). It is also possible to load this from [jsDelivr](https://www.jsdelivr.com/package/npm/web-vitals), and [cdnjs](https://cdnjs.com/libraries/web-vitals).
-
-_**Important!** The [unpkg.com](https://unpkg.com), [jsDelivr](https://www.jsdelivr.com/), and [cdnjs](https://cdnjs.com) CDNs are shown here for example purposes only. `unpkg.com`, `jsDelivr`, and `cdnjs` are not affiliated with Google, and there are no guarantees that loading the library from those CDNs will continue to work in the future. Self-hosting the built files rather than loading from the CDN is better for security, reliability, and performance reasons._
-
-**Load the "standard" build** _(using a module script)_
+The library can be loaded either as a standalone script, or through an [AMD][amd]-compatible loader
 
 ```html
-<!-- Append the `?module` param to load the module version of `web-vitals` -->
-<script type="module">
-  import {onCLS, onINP, onLCP} from 'https://unpkg.com/web-vitals@4?module';
-
-  onCLS(console.log);
-  onINP(console.log);
-  onLCP(console.log);
+<script type="text/javascript" src="validator.min.js"></script>
+<script type="text/javascript">
+  validator.isEmail('foo@bar.com'); //=> true
 </script>
 ```
 
-**Load the "standard" build** _(using a classic script)_
+The library can also be installed through [bower][bower]
+
+```bash
+$ bower install validator-js
+```
+
+CDN
 
 ```html
-<script>
-  (function () {
-    var script = document.createElement('script');
-    script.src = 'https://unpkg.com/web-vitals@4/dist/web-vitals.iife.js';
-    script.onload = function () {
-      // When loading `web-vitals` using a classic script, all the public
-      // methods can be found on the `webVitals` global namespace.
-      webVitals.onCLS(console.log);
-      webVitals.onINP(console.log);
-      webVitals.onLCP(console.log);
-    };
-    document.head.appendChild(script);
-  })();
-</script>
+<script src="https://unpkg.com/validator@latest/validator.min.js"></script>
 ```
 
-**Load the "attribution" build** _(using a module script)_
+## Validators
+
+Here is a list of the validators currently available.
+
+Validator                               | Description
+--------------------------------------- | --------------------------------------
+**contains(str, seed [, options])**    | check if the string contains the seed.<br/><br/>`options` is an object that defaults to `{ ignoreCase: false, minOccurrences: 1 }`.<br />Options: <br/> `ignoreCase`: Ignore case when doing comparison, default false.<br/>`minOccurrences`: Minimum number of occurrences for the seed in the string. Defaults to 1.
+**equals(str, comparison)**             | check if the string matches the comparison.
+**isAbaRouting(str)**               | check if the string is an ABA routing number for US bank account / cheque.
+**isAfter(str [, options])**            | check if the string is a date that is after the specified date.<br/><br/>`options` is an object that defaults to `{ comparisonDate: Date().toString() }`.<br/>**Options:**<br/>`comparisonDate`: Date to compare to. Defaults to `Date().toString()` (now).
+**isAlpha(str [, locale, options])**    | check if the string contains only letters (a-zA-Z).<br/><br/>`locale` is one of `['ar', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG', 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-QM', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE', 'bg-BG', 'bn', 'bn-IN', 'cs-CZ', 'da-DK', 'de-DE', 'el-GR', 'en-AU', 'en-GB', 'en-HK', 'en-IN', 'en-NZ', 'en-US', 'en-ZA', 'en-ZM', 'eo', 'es-ES', 'fa-IR', 'fi-FI', 'fr-CA', 'fr-FR', 'gu-IN', 'he', 'hi-IN', 'hu-HU', 'it-IT', 'ja-JP', 'kk-KZ', 'kn-IN', 'ko-KR', 'ku-IQ', 'ml-IN', 'nb-NO', 'nl-NL', 'nn-NO', 'or-IN', 'pa-IN', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'si-LK', 'sk-SK', 'sl-SI', 'sr-RS', 'sr-RS@latin', 'sv-SE', 'ta-IN', 'te-IN', 'th-TH', 'tr-TR', 'uk-UA']` and defaults to `en-US`. Locale list is `validator.isAlphaLocales`. `options` is an optional object that can be supplied with the following key(s): `ignore` which can either be a String or RegExp of characters to be ignored e.g. " -" will ignore spaces and -'s.
+**isAlphanumeric(str [, locale, options])**      | check if the string contains only letters and numbers (a-zA-Z0-9).<br/><br/>`locale` is one of `['ar', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG', 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-QM', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE', 'bg-BG', 'bn', 'bn-IN', 'cs-CZ', 'da-DK', 'de-DE', 'el-GR', 'en-AU', 'en-GB', 'en-HK', 'en-IN', 'en-NZ', 'en-US', 'en-ZA', 'en-ZM', 'eo', 'es-ES', 'fa-IR', 'fi-FI', 'fr-CA', 'fr-FR', 'gu-IN', 'he', 'hi-IN', 'hu-HU', 'it-IT', 'ja-JP', 'kk-KZ', 'kn-IN', 'ko-KR', 'ku-IQ', 'ml-IN', 'nb-NO', 'nl-NL', 'nn-NO', 'or-IN', 'pa-IN', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'si-LK', 'sk-SK', 'sl-SI', 'sr-RS', 'sr-RS@latin', 'sv-SE', 'ta-IN', 'te-IN', 'th-TH', 'tr-TR', 'uk-UA']`) and defaults to `en-US`. Locale list is `validator.isAlphanumericLocales`. `options` is an optional object that can be supplied with the following key(s): `ignore` which can either be a String or RegExp of characters to be ignored e.g. " -" will ignore spaces and -'s.
+**isAscii(str)**                        | check if the string contains ASCII chars only.
+**isBase32(str [, options])**           | check if the string is base32 encoded. `options` is optional and defaults to `{ crockford: false }`.<br/> When `crockford` is true it tests the given base32 encoded string using [Crockford's base32 alternative][Crockford Base32].
+**isBase58(str)**                       | check if the string is base58 encoded.
+**isBase64(str [, options])**          | check if the string is base64 encoded. `options` is optional and defaults to `{ urlSafe: false, padding: true }`<br/> when `urlSafe` is true default value for `padding` is false and it tests the given base64 encoded string is [url safe][Base64 URL Safe].
+**isBefore(str [, options])**              | check if the string is a date that is before the specified date.<br/><br/>`options` is an object that defaults to `{ comparisonDate: Date().toString() }`.<br/><br/>**Options:**<br/>`comparisonDate`: Date to compare to. Defaults to `Date().toString()` (now).
+**isBIC(str)**                          | check if the string is a BIC (Bank Identification Code) or SWIFT code.
+**isBoolean(str [, options])**          | check if the string is a boolean.<br/>`options` is an object which defaults to `{ loose: false }`. If `loose` is set to false, the validator will strictly match ['true', 'false', '0', '1']. If `loose` is set to true, the validator will also match 'yes', 'no', and will match a valid boolean string of any case. (e.g.: ['true', 'True', 'TRUE']).
+**isBtcAddress(str)**            | check if the string is a valid BTC address.
+**isByteLength(str [, options])**          | check if the string's length (in UTF-8 bytes) falls in a range.<br/><br/>`options` is an object which defaults to `{ min: 0, max: undefined }`.
+**isCreditCard(str [, options])**                   | check if the string is a credit card number.<br/><br/> `options` is an optional object that can be supplied with the following key(s): `provider` is an optional key whose value should be a string, and defines the company issuing the credit card. Valid values include `['amex', 'dinersclub', 'discover', 'jcb', 'mastercard', 'unionpay', 'visa']` or blank will check for any provider.
+**isCurrency(str [, options])**            | check if the string is a valid currency amount.<br/><br/>`options` is an object which defaults to `{ symbol: '$', require_symbol: false, allow_space_after_symbol: false, symbol_after_digits: false, allow_negatives: true, parens_for_negatives: false, negative_sign_before_digits: false, negative_sign_after_digits: false, allow_negative_sign_placeholder: false, thousands_separator: ',', decimal_separator: '.', allow_decimal: true, require_decimal: false, digits_after_decimal: [2], allow_space_after_digits: false }`.<br/>**Note:** The array `digits_after_decimal` is filled with the exact number of digits allowed not a range, for example a range 1 to 3 will be given as [1, 2, 3].
+**isDataURI(str)**                      | check if the string is a [data uri format][Data URI Format].
+**isDate(str [, options])**          | check if the string is a valid date. e.g. [`2002-07-15`, new Date()].<br/><br/> `options` is an object which can contain the keys `format`, `strictMode` and/or `delimiters`.<br/><br/>`format` is a string and defaults to `YYYY/MM/DD`.<br/><br/>`strictMode` is a boolean and defaults to `false`. If `strictMode` is set to true, the validator will reject strings different from `format`.<br/><br/> `delimiters` is an array of allowed date delimiters and defaults to `['/', '-']`.
+**isDecimal(str [, options])**             | check if the string represents a decimal number, such as 0.1, .3, 1.1, 1.00003, 4.0, etc.<br/><br/>`options` is an object which defaults to `{force_decimal: false, decimal_digits: '1,', locale: 'en-US'}`.<br/><br/>`locale` determines the decimal separator and is one of `['ar', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG', 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-QM', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE', 'bg-BG', 'cs-CZ', 'da-DK', 'de-DE', 'el-GR', 'en-AU', 'en-GB', 'en-HK', 'en-IN', 'en-NZ', 'en-US', 'en-ZA', 'en-ZM', 'eo', 'es-ES', 'fa', 'fa-AF', 'fa-IR', 'fr-FR', 'fr-CA', 'hu-HU', 'id-ID', 'it-IT', 'ku-IQ', 'nb-NO', 'nl-NL', 'nn-NO', 'pl-PL', 'pl-Pl', 'pt-BR', 'pt-PT', 'ru-RU', 'sl-SI', 'sr-RS', 'sr-RS@latin', 'sv-SE', 'tr-TR', 'uk-UA', 'vi-VN']`.<br/>**Note:** `decimal_digits` is given as a range like '1,3', a specific value like '3' or min like '1,'.
+**isDivisibleBy(str, number)**          | check if the string is a number that is divisible by another.
+**isEAN(str)**                          | check if the string is an [EAN (European Article Number)][European Article Number].
+**isEmail(str [, options])**            | check if the string is an email.<br/><br/>`options` is an object which defaults to `{ allow_display_name: false, require_display_name: false, allow_utf8_local_part: true, require_tld: true, allow_ip_domain: false, allow_underscores: false, domain_specific_validation: false, blacklisted_chars: '', host_blacklist: [] }`. If `allow_display_name` is set to true, the validator will also match `Display Name <email-address>`. If `require_display_name` is set to true, the validator will reject strings without the format `Display Name <email-address>`. If `allow_utf8_local_part` is set to false, the validator will not allow any non-English UTF8 character in email address' local part. If `require_tld` is set to false, email addresses without a TLD in their domain will also be matched. If `ignore_max_length` is set to true, the validator will not check for the standard max length of an email. If `allow_ip_domain` is set to true, the validator will allow IP addresses in the host part. If `domain_specific_validation` is true, some additional validation will be enabled, e.g. disallowing certain syntactically valid email addresses that are rejected by Gmail. If `blacklisted_chars` receives a string, then the validator will reject emails that include any of the characters in the string, in the name part. If `host_blacklist` is set to an array of strings or regexp, and the part of the email after the `@` symbol matches one of the strings defined in it, the validation fails. If `host_whitelist` is set to an array of strings or regexp, and the part of the email after the `@` symbol matches none of the strings defined in it, the validation fails.
+**isEmpty(str [, options])**            | check if the string has a length of zero.<br/><br/>`options` is an object which defaults to `{ ignore_whitespace: false }`.
+**isEthereumAddress(str)**              | check if the string is an [Ethereum][Ethereum] address. Does not validate address checksums.
+**isFloat(str [, options])**            | check if the string is a float.<br/><br/>`options` is an object which can contain the keys `min`, `max`, `gt`, and/or `lt` to validate the float is within boundaries (e.g. `{ min: 7.22, max: 9.55 }`) it also has `locale` as an option.<br/><br/>`min` and `max` are equivalent to 'greater or equal' and 'less or equal', respectively while `gt` and `lt` are their strict counterparts.<br/><br/>`locale` determines the decimal separator and is one of `['ar', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG', 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-QM', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE', 'bg-BG', 'cs-CZ', 'da-DK', 'de-DE', 'en-AU', 'en-GB', 'en-HK', 'en-IN', 'en-NZ', 'en-US', 'en-ZA', 'en-ZM', 'eo', 'es-ES', 'fr-CA', 'fr-FR', 'hu-HU', 'it-IT', 'nb-NO', 'nl-NL', 'nn-NO', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'sl-SI', 'sr-RS', 'sr-RS@latin', 'sv-SE', 'tr-TR', 'uk-UA']`. Locale list is `validator.isFloatLocales`.
+**isFQDN(str [, options])**             | check if the string is a fully qualified domain name (e.g. domain.com).<br/><br/>`options` is an object which defaults to `{ require_tld: true, allow_underscores: false, allow_trailing_dot: false, allow_numeric_tld: false, allow_wildcard: false, ignore_max_length: false }`.<br/><br/>`require_tld` - If set to false the validator will not check if the domain includes a TLD.<br/>`allow_underscores` - if set to true, the validator will allow underscores in the domain.<br/>`allow_trailing_dot` - if set to true, the validator will allow the domain to end with a `.` character.<br/>`allow_numeric_tld` - if set to true, the validator will allow the TLD of the domain to be made up solely of numbers.<br />`allow_wildcard` - if set to true, the validator will allow domains starting with `*.` (e.g. `*.example.com` or `*.shop.example.com`).<br/>`ignore_max_length` - if set to true, the validator will not check for the standard max length of a domain.<br/>
+**isFreightContainerID(str)**           | alias for `isISO6346`, check if the string is a valid [ISO 6346](https://en.wikipedia.org/wiki/ISO_6346) shipping container identification.
+**isFullWidth(str)**                    | check if the string contains any full-width chars.
+**isHalfWidth(str)**                    | check if the string contains any half-width chars.
+**isHash(str, algorithm)**              | check if the string is a hash of type algorithm.<br/><br/>Algorithm is one of `['crc32', 'crc32b', 'md4', 'md5', 'ripemd128', 'ripemd160', 'sha1', 'sha256', 'sha384', 'sha512', 'tiger128', 'tiger160', 'tiger192']`.
+**isHexadecimal(str)**                  | check if the string is a hexadecimal number.
+**isHexColor(str [, options])**         | check if the string is a hexadecimal color. <br/><br/>`options` is an object that defaults to `{ require_hashtag: false }`.<br />Options: <br/> `require_hashtag`: Enforce # prefix, default false.
+**isHSL(str)**                          | check if the string is an HSL (hue, saturation, lightness, optional alpha) color based on [CSS Colors Level 4 specification][CSS Colors Level 4 Specification].<br/><br/>Comma-separated format supported. Space-separated format supported with the exception of a few edge cases (ex: `hsl(200grad+.1%62%/1)`).
+**isIBAN(str, [, options])**            | check if the string is an IBAN (International Bank Account Number).<br/><br/>`options` is an object which accepts two attributes: `whitelist`: where you can restrict IBAN codes you want to receive data from and `blacklist`: where you can remove some of the countries from the current list. For both you can use an array with the following values `['AD','AE','AL','AT','AZ','BA','BE','BG','BH','BR','BY','CH','CR','CY','CZ','DE','DK','DO','EE','EG','ES','FI','FO','FR','GB','GE','GI','GL','GR','GT','HR','HU','IE','IL','IQ','IR','IS','IT','JO','KW','KZ','LB','LC','LI','LT','LU','LV','MC','MD','ME','MK','MR','MT','MU','MZ','NL','NO','PK','PL','PS','PT','QA','RO','RS','SA','SC','SE','SI','SK','SM','SV','TL','TN','TR','UA','VA','VG','XK']`.
+**isIdentityCard(str [, locale])**      | check if the string is a valid identity card code.<br/><br/>`locale` is one of `['LK', 'PL', 'ES', 'FI', 'IN', 'IT', 'IR', 'MZ', 'NO', 'TH', 'zh-TW', 'he-IL', 'ar-LY', 'ar-TN', 'zh-CN', 'zh-HK', 'PK']` OR `'any'`. If 'any' is used, function will check if any of the locales match.<br/><br/>Defaults to 'any'.
+**isIMEI(str [, options]))**            | check if the string is a valid [IMEI number][IMEI]. IMEI should be of format `###############` or `##-######-######-#`.<br/><br/>`options` is an object which can contain the keys `allow_hyphens`. Defaults to first format. If `allow_hyphens` is set to true, the validator will validate the second format.
+**isIn(str, values)**                   | check if the string is in an array of allowed values.
+**isInt(str [, options])**              | check if the string is an integer.<br/><br/>`options` is an object which can contain the keys `min` and/or `max` to check the integer is within boundaries (e.g. `{ min: 10, max: 99 }`). `options` can also contain the key `allow_leading_zeroes`, which when set to false will disallow integer values with leading zeroes (e.g. `{ allow_leading_zeroes: false }`). Finally, `options` can contain the keys `gt` and/or `lt` which will enforce integers being greater than or less than, respectively, the value provided (e.g. `{gt: 1, lt: 4}` for a number between 1 and 4).
+**isIP(str [, options])**               | check if the string is an IP address (version 4 or 6).<br/><br/>`options` is an object that defaults to `{ version: '' }`.<br/><br/>**Options:**<br/>`version`: defines which IP version to compare to. Accepted values: `4`, `6`, `'4'`, `'6'`.
+**isIPRange(str [, version])**          | check if the string is an IP Range (version 4 or 6).
+**isISBN(str [, options])**             | check if the string is an [ISBN][ISBN].<br/><br/>`options` is an object that has no default.<br/>**Options:**<br/>`version`: ISBN version to compare to. Accepted values are '10' and '13'. If none provided, both will be tested.
+**isISIN(str)**                         | check if the string is an [ISIN][ISIN] (stock/security identifier).
+**isISO6346(str)**                      | check if the string is a valid [ISO 6346](https://en.wikipedia.org/wiki/ISO_6346) shipping container identification.
+**isISO6391(str)**                      | check if the string is a valid [ISO 639-1][ISO 639-1] language code.
+**isISO8601(str [, options])**          | check if the string is a valid [ISO 8601][ISO 8601] date. <br/>`options` is an object which defaults to `{ strict: false, strictSeparator: false }`. If `strict` is true, date strings with invalid dates like `2009-02-29` will be invalid. If `strictSeparator` is true, date strings with date and time separated by anything other than a T will be invalid.
+**isISO15924(str)**                     | check if the string is a valid [ISO 15924][ISO 15924] officially assigned script code.
+**isISO31661Alpha2(str [, options])**   | check if the string is a valid [ISO 3166-1 alpha-2][ISO 3166-1 alpha-2] officially assigned country code. <br/>`options` is an object which can contain the key `userAssignedCodes`: an array of custom codes that are not officially assigned (e.g. `['XK']`).
+**isISO31661Alpha3(str [, options])**   | check if the string is a valid [ISO 3166-1 alpha-3][ISO 3166-1 alpha-3] officially assigned country code. <br/>`options` is an object which can contain the key `userAssignedCodes`: an array of custom codes that are not officially assigned (e.g. `['XXK']`).
+**isISO31661Numeric(str)**              | check if the string is a valid [ISO 3166-1 numeric][ISO 3166-1 numeric] officially assigned country code.
+**isISO4217(str)**                      | check if the string is a valid [ISO 4217][ISO 4217] officially assigned currency code.
+**isISRC(str)**                         | check if the string is an [ISRC][ISRC].
+**isISSN(str [, options])**             | check if the string is an [ISSN][ISSN].<br/><br/>`options` is an object which defaults to `{ case_sensitive: false, require_hyphen: false }`. If `case_sensitive` is true, ISSNs with a lowercase `'x'` as the check digit are rejected.
+**isJSON(str [, options])**             | check if the string is valid JSON (note: uses JSON.parse).<br/><br/>`options` is an object which defaults to `{ allow_primitives: false, allow_any_value: false }`. If `allow_primitives` is true, the primitives 'true', 'false' and 'null' are accepted as valid JSON values. If `allow_any_value` is true, any string that passes JSON.parse is considered valid.
+**isJWT(str)**                          | check if the string is valid JWT token.
+**isLatLong(str [, options])**          | check if the string is a valid latitude-longitude coordinate in the format `lat,long` or `lat, long`.<br/><br/>`options` is an object that defaults to `{ checkDMS: false }`. Pass `checkDMS` as `true` to validate DMS(degrees, minutes, and seconds) latitude-longitude format.
+**isLength(str [, options])**           | check if the string's length falls in a range and equal to any of the integers of the `discreteLengths` array if provided.<br/><br/>`options` is an object which defaults to `{ min: 0, max: undefined, discreteLengths: undefined }`. Note: this function takes into account surrogate pairs.
+**isLicensePlate(str, locale)**         | check if the string matches the format of a country's license plate.<br/><br/>`locale` is one of `['cs-CZ', 'de-DE', 'de-LI', 'en-IN', 'en-SG', 'en-PK', 'es-AR', 'hu-HU', 'pt-BR', 'pt-PT', 'sq-AL', 'sv-SE']` or `'any'`.
+**isLocale(str)**                       | check if the string is a locale.
+**isLowercase(str)**                    | check if the string is lowercase.
+**isLuhnNumber(str)**                    | check if the string passes the [Luhn algorithm check](https://en.wikipedia.org/wiki/Luhn_algorithm).
+**isMACAddress(str [, options])**                   | check if the string is a MAC address.<br/><br/>`options` is an object which defaults to `{ no_separators: false }`. It allows the use of hyphens, spaces or dots e.g. '01 02 03 04 05 ab', '01-02-03-04-05-ab' or '0102.0304.05ab'. If `no_separators` is true, the validator will then only check MAC addresses without separators. The options also allow a `eui` property to specify if it needs to be validated against EUI-48 or EUI-64. The accepted values of `eui` are: 48, 64.
+**isMagnetURI(str)**                      | check if the string is a [Magnet URI format][Magnet URI Format].
+**isMailtoURI(str, [, options])**                      | check if the string is a [Mailto URI format][Mailto URI Format].<br/><br/>`options` is an object of validating emails inside the URI (check `isEmail`s options for details).
+**isMD5(str)**                          | check if the string is a MD5 hash.<br/><br/>Please note that you can also use the `isHash(str, 'md5')` function. Keep in mind that MD5 has some collision weaknesses compared to other algorithms (e.g., SHA).
+**isMimeType(str)**                     | check if the string matches to a valid [MIME type][MIME Type] format.
+**isMobilePhone(str [, locale [, options]])**          | check if the string is a mobile phone number,<br/><br/>`locale` is either an array of locales (e.g. `['sk-SK', 'sr-RS']`) OR one of `['am-Am', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG', 'ar-EH', 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-PS', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE', 'az-AZ', 'az-LB', 'az-LY', 'be-BY', 'bg-BG', 'bn-BD', 'bs-BA', 'ca-AD', 'cs-CZ', 'da-DK', 'de-AT', 'de-CH', 'de-DE', 'de-LU', 'dv-MV', 'dz-BT', 'el-CY', 'el-GR', 'en-AG', 'en-AI', 'en-AU', 'en-BM', 'en-BS', 'en-BW', 'en-CA', 'en-GB', 'en-GG', 'en-GH', 'en-GY', 'en-HK', 'en-IE', 'en-IN', 'en-JM', 'en-KE', 'en-KI', 'en-KN', 'en-LS', 'en-MO', 'en-MT', 'en-MU', 'en-MW', 'en-NG', 'en-NZ', 'en-PG', 'en-PH', 'en-PK', 'en-RW', 'en-SG', 'en-SL', 'en-SS', 'en-TZ', 'en-UG', 'en-US', 'en-ZA', 'en-ZM', 'en-ZW', 'es-AR', 'es-BO', 'es-CL', 'es-CO', 'es-CR', 'es-CU', 'es-DO', 'es-EC', 'es-ES', 'es-GT','es-HN', 'es-MX', 'es-NI', 'es-PA', 'es-PE', 'es-PY', 'es-SV', 'es-UY', 'es-VE', 'et-EE', 'fa-AF', 'fa-IR', 'fi-FI', 'fj-FJ', 'fo-FO', 'fr-BE', 'fr-BF', 'fr-BJ', 'fr-CD', 'fr-CF', 'fr-DJ', 'fr-FR', 'fr-GF', 'fr-GP', 'fr-MQ', 'fr-PF', 'fr-RE', 'fr-WF', 'ga-IE', 'he-IL', 'hu-HU', 'id-ID', 'ir-IR', 'it-IT', 'it-SM', 'ja-JP', 'ka-GE', 'kk-KZ', 'kl-GL', 'ko-KR', 'ky-KG', 'lt-LT', 'mg-MG', 'mn-MN', 'mk-MK', 'ms-MY', 'my-MM', 'mz-MZ', 'nb-NO', 'ne-NP', 'nl-AW', 'nl-BE', 'nl-NL', 'nn-NO', 'pl-PL', 'pt-AO', 'pt-BR', 'pt-PT', 'ro-Md', 'ro-RO', 'ru-RU', 'si-LK', 'sk-SK', 'sl-SI', 'so-SO', 'sq-AL', 'sr-RS', 'sv-SE', 'tg-TJ', 'th-TH', 'tk-TM', 'tr-TR', 'uk-UA', 'uz-UZ', 'vi-VN', 'zh-CN', 'zh-HK', 'zh-MO', 'zh-TW']` OR defaults to `'any'`. If 'any' or a falsey value is used, function will check if any of the locales match).<br/><br/>`options` is an optional object that can be supplied with the following keys: `strictMode`, if this is set to `true`, the mobile phone number must be supplied with the country code and therefore must start with `+`. Locale list is `validator.isMobilePhoneLocales`.
+**isMongoId(str)**                      | check if the string is a valid hex-encoded representation of a [MongoDB ObjectId][mongoid].
+**isMultibyte(str)**                    | check if the string contains one or more multibyte chars.
+**isNumeric(str [, options])**                      | check if the string contains only numbers.<br/><br/>`options` is an object which defaults to `{ no_symbols: false }` it also has `locale` as an option. If `no_symbols` is true, the validator will reject numeric strings that feature a symbol (e.g. `+`, `-`, or `.`).<br/><br/>`locale` determines the decimal separator and is one of `['ar', 'ar-AE', 'ar-BH', 'ar-DZ', 'ar-EG', 'ar-IQ', 'ar-JO', 'ar-KW', 'ar-LB', 'ar-LY', 'ar-MA', 'ar-QA', 'ar-QM', 'ar-SA', 'ar-SD', 'ar-SY', 'ar-TN', 'ar-YE', 'bg-BG', 'cs-CZ', 'da-DK', 'de-DE', 'en-AU', 'en-GB', 'en-HK', 'en-IN', 'en-NZ', 'en-US', 'en-ZA', 'en-ZM', 'eo', 'es-ES', 'fr-FR', 'fr-CA', 'hu-HU', 'it-IT', 'nb-NO', 'nl-NL', 'nn-NO', 'pl-PL', 'pt-BR', 'pt-PT', 'ru-RU', 'sl-SI', 'sr-RS', 'sr-RS@latin', 'sv-SE', 'tr-TR', 'uk-UA']`.
+**isOctal(str)**                        | check if the string is a valid octal number.
+**isPassportNumber(str, countryCode)**    | check if the string is a valid passport number.<br/><br/>`countryCode` is one of `['AM', 'AR', 'AT', 'AU', 'AZ', 'BE', 'BG', 'BY', 'BR', 'CA', 'CH', 'CN', 'CY', 'CZ', 'DE', 'DK', 'DZ', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HU', 'IE', 'IN', 'IR', 'ID', 'IS', 'IT', 'JM', 'JP', 'KR', 'KZ', 'LI', 'LT', 'LU', 'LV', 'LY', 'MT', 'MX', 'MY', 'MZ', 'NL', 'NZ', 'PH', 'PK', 'PL', 'PT', 'RO', 'RU', 'SE', 'SL', 'SK', 'TH', 'TR', 'UA', 'US', 'ZA']`.  Locale list is `validator.passportNumberLocales`.
+**isPort(str)**                         | check if the string is a valid port number.
+**isPostalCode(str, locale)**           | check if the string is a postal code.<br/><br/>`locale` is one of `['AD', 'AT', 'AU', 'AZ', 'BA', 'BD', 'BE', 'BG', 'BR', 'BY', 'CA', 'CH', 'CN', 'CO', 'CZ', 'DE', 'DK', 'DO', 'DZ', 'EE', 'ES', 'FI', 'FR', 'GB', 'GR', 'HR', 'HT', 'HU', 'ID', 'IE', 'IL', 'IN', 'IR', 'IS', 'IT', 'JP', 'KE', 'KR', 'LI', 'LK', 'LT', 'LU', 'LV', 'MC', 'MG', 'MT', 'MX', 'MY', 'NL', 'NO', 'NP', 'NZ', 'PK', 'PL', 'PR', 'PT', 'RO', 'RU', 'SA', 'SE', 'SG', 'SI', 'SK', 'TH', 'TN', 'TW', 'UA', 'US', 'ZA', 'ZM']` OR `'any'`. If 'any' is used, function will check if any of the locales match. Locale list is `validator.isPostalCodeLocales`.
+**isRFC3339(str)**                      | check if the string is a valid [RFC 3339][RFC 3339] date.
+**isRgbColor(str [,options])**                     | check if the string is a rgb or rgba color.<br/></br>`options` is an object with the following properties<br/><br/>`includePercentValues` defaults to `true`. If you don't want to allow to set `rgb` or `rgba` values with percents, like `rgb(5%,5%,5%)`, or `rgba(90%,90%,90%,.3)`, then set it to false.<br/><br/>`allowSpaces` defaults to `true`, which prohibits whitespace. If set to false, whitespace between color values is allowed, such as `rgb(255, 255, 255)` or even `rgba(255,       128,        0,      0.7)`.
+**isSemVer(str)**                       | check if the string is a Semantic Versioning Specification (SemVer).
+**isSurrogatePair(str)**                | check if the string contains any surrogate pairs chars.
+**isUppercase(str)**                    | check if the string is uppercase.
+**isSlug(str)**                         | check if the string is of type slug.
+**isStrongPassword(str [, options])**   | check if the string can be considered a strong password or not. Allows for custom requirements or scoring rules. If `returnScore` is true, then the function returns an integer score for the password rather than a boolean.<br/>Default options: <br/>`{ minLength: 8, minLowercase: 1, minUppercase: 1, minNumbers: 1, minSymbols: 1, returnScore: false, pointsPerUnique: 1, pointsPerRepeat: 0.5, pointsForContainingLower: 10, pointsForContainingUpper: 10, pointsForContainingNumber: 10, pointsForContainingSymbol: 10 }`
+**isTime(str [, options])**             | check if the string is a valid time e.g. [`23:01:59`, new Date().toLocaleTimeString()].<br/><br/> `options` is an object which can contain the keys `hourFormat` or `mode`.<br/><br/>`hourFormat` is a key and defaults to `'hour24'`.<br/><br/>`mode` is a key and defaults to `'default'`. <br/><br/>`hourFormat` can contain the values `'hour12'` or `'hour24'`, `'hour24'` will validate hours in 24 format and `'hour12'` will validate hours in 12 format. <br/><br/>`mode` can contain the values `'default', 'withSeconds', withOptionalSeconds`, `'default'` will validate `HH:MM` format, `'withSeconds'` will validate the `HH:MM:SS` format, `'withOptionalSeconds'` will validate `'HH:MM'` and `'HH:MM:SS'` formats.
+**isTaxID(str, locale)**                | check if the string is a valid Tax Identification Number. Default locale is `en-US`.<br/><br/>More info about exact TIN support can be found in `src/lib/isTaxID.js`.<br/><br/>Supported locales: `[ 'bg-BG', 'cs-CZ', 'de-AT', 'de-DE', 'dk-DK', 'el-CY', 'el-GR', 'en-CA', 'en-GB', 'en-IE', 'en-US', 'es-AR', 'es-ES', 'et-EE', 'fi-FI', 'fr-BE', 'fr-CA', 'fr-FR', 'fr-LU', 'hr-HR', 'hu-HU', 'it-IT', 'lb-LU', 'lt-LT', 'lv-LV', 'mt-MT', 'nl-BE', 'nl-NL', 'pl-PL', 'pt-BR', 'pt-PT', 'ro-RO', 'sk-SK', 'sl-SI', 'sv-SE', 'uk-UA']`.
+**isURL(str [, options])**              | check if the string is a URL.<br/><br/>`options` is an object which defaults to `{ protocols: ['http','https','ftp'], require_tld: true, require_protocol: false, require_host: true, require_port: false, require_valid_protocol: true, allow_underscores: false, host_whitelist: false, host_blacklist: false, allow_trailing_dot: false, allow_protocol_relative_urls: false, allow_fragments: true, allow_query_components: true, disallow_auth: false, validate_length: true }`.<br/><br/>`protocols` - valid protocols can be modified with this option.<br/>`require_tld` - If set to false isURL will not check if the URL's host includes a top-level domain.<br/>`require_protocol` - **RECOMMENDED** if set to true isURL will return false if protocol is not present in the URL. Without this setting, some malicious URLs cannot be distinguishable from a valid URL with authentication information.<br/>`require_host` - if set to false isURL will not check if host is present in the URL.<br/>`require_port` - if set to true isURL will check if port is present in the URL.<br/>`require_valid_protocol` - isURL will check if the URL's protocol is present in the protocols option.<br/>`allow_underscores` - if set to true, the validator will allow underscores in the URL.<br/>`host_whitelist` - if set to an array of strings or regexp, and the domain matches none of the strings defined in it, the validation fails.<br/>`host_blacklist` - if set to an array of strings or regexp, and the domain matches any of the strings defined in it, the validation fails.<br/>`allow_trailing_dot` - if set to true, the validator will allow the domain to end with a `.` character.<br/>`allow_protocol_relative_urls` - if set to true protocol relative URLs will be allowed.<br/>`allow_fragments` - if set to false isURL will return false if fragments are present.<br/>`allow_query_components` - if set to false isURL will return false if query components are present.<br/>`disallow_auth` - if set to true, the validator will fail if the URL contains an authentication component, e.g. `http://username:password@example.com`.<br/>`validate_length` - if set to false isURL will skip string length validation. `max_allowed_length` will be ignored if this is set as `false`.<br/>`max_allowed_length` - if set, isURL will not allow URLs longer than the specified value (default is 2084 that IE maximum URL length).<br/>
+**isULID(str)**                         | check if the string is a [ULID](https://github.com/ulid/spec).
+**isUUID(str [, version])**             | check if the string is an RFC9562 UUID.<br/>`version` is one of `'1'`-`'8'`, `'nil'`, `'max'`, `'all'` or `'loose'`. The `'loose'` option checks if the string is a UUID-like string with hexadecimal values, ignoring RFC9565.
+**isVariableWidth(str)**                | check if the string contains a mixture of full and half-width chars.
+**isVAT(str, countryCode)**             | check if the string is a [valid VAT number][VAT Number] if validation is available for the given country code matching [ISO 3166-1 alpha-2][ISO 3166-1 alpha-2]. <br/><br/>`countryCode` is one of `['AL', 'AR', 'AT', 'AU', 'BE', 'BG', 'BO', 'BR', 'BY', 'CA', 'CH', 'CL', 'CO', 'CR', 'CY', 'CZ', 'DE', 'DK', 'DO', 'EC', 'EE', 'EL', 'ES', 'FI', 'FR', 'GB', 'GT', 'HN', 'HR', 'HU', 'ID', 'IE', 'IL', 'IN', 'IS', 'IT', 'KZ', 'LT', 'LU', 'LV', 'MK', 'MT', 'MX', 'NG', 'NI', 'NL', 'NO', 'NZ', 'PA', 'PE', 'PH', 'PL', 'PT', 'PY', 'RO', 'RS', 'RU', 'SA', 'SE', 'SI', 'SK', 'SM', 'SV', 'TR', 'UA', 'UY', 'UZ', 'VE']`.
+**isWhitelisted(str, chars)**           | check if the string consists only of characters that appear in the whitelist `chars`.
+**matches(str, pattern [, modifiers])** | check if the string matches the pattern.<br/><br/>Either `matches('foo', /foo/i)` or `matches('foo', 'foo', 'i')`.<br/>**Note:** The pattern is not checked for possible ReDoS attacks. We do not recommend that the user can provide their own pattern.
+
+## Sanitizers
+
+Here is a list of the sanitizers currently available.
+
+Sanitizer                              | Description
+-------------------------------------- | -------------------------------
+**blacklist(input, chars)**            | remove characters that appear in the blacklist. The characters are used in a RegExp and so you will need to escape some chars, e.g. `blacklist(input, '\\[\\]')`.
+**escape(input)**                      | replace `<`, `>`, `&`, `'`, `"`, `` ` ``, `\` and `/` with HTML entities.
+**ltrim(input [, chars])**             | trim characters from the left-side of the input.
+**normalizeEmail(email [, options])**  | canonicalize an email address. (This doesn't validate that the input is an email, if you want to validate the email use isEmail beforehand).<br/><br/>`options` is an object with the following keys and default values:<br/><ul><li>*all_lowercase: true* - Transforms the local part (before the @ symbol) of all email addresses to lowercase. Please note that this may violate RFC 5321, which gives providers the possibility to treat the local part of email addresses in a case sensitive way (although in practice most - yet not all - providers don't). The domain part of the email address is always lowercased, as it is case insensitive per RFC 1035.</li><li>*gmail_lowercase: true* - Gmail addresses are known to be case-insensitive, so this switch allows lowercasing them even when *all_lowercase* is set to false. Please note that when *all_lowercase* is true, Gmail addresses are lowercased regardless of the value of this setting.</li><li>*gmail_remove_dots: true*: Removes dots from the local part of the email address, as Gmail ignores them (e.g. "john.doe" and "johndoe" are considered equal).</li><li>*gmail_remove_subaddress: true*: Normalizes addresses by removing "sub-addresses", which is the part following a "+" sign (e.g. "foo+bar@gmail.com" becomes "foo@gmail.com").</li><li>*gmail_convert_googlemaildotcom: true*: Converts addresses with domain @googlemail.com to @gmail.com, as they're equivalent.</li><li>*outlookdotcom_lowercase: true* - Outlook.com addresses (including Windows Live and Hotmail) are known to be case-insensitive, so this switch allows lowercasing them even when *all_lowercase* is set to false. Please note that when *all_lowercase* is true, Outlook.com addresses are lowercased regardless of the value of this setting.</li><li>*outlookdotcom_remove_subaddress: true*: Normalizes addresses by removing "sub-addresses", which is the part following a "+" sign (e.g. "foo+bar@outlook.com" becomes "foo@outlook.com").</li><li>*yahoo_lowercase: true* - Yahoo Mail addresses are known to be case-insensitive, so this switch allows lowercasing them even when *all_lowercase* is set to false. Please note that when *all_lowercase* is true, Yahoo Mail addresses are lowercased regardless of the value of this setting.</li><li>*yahoo_remove_subaddress: true*: Normalizes addresses by removing "sub-addresses", which is the part following a "-" sign (e.g. "foo-bar@yahoo.com" becomes "foo@yahoo.com").</li><li>*icloud_lowercase: true* - iCloud addresses (including MobileMe) are known to be case-insensitive, so this switch allows lowercasing them even when *all_lowercase* is set to false. Please note that when *all_lowercase* is true, iCloud addresses are lowercased regardless of the value of this setting.</li><li>*icloud_remove_subaddress: true*: Normalizes addresses by removing "sub-addresses", which is the part following a "+" sign (e.g. "foo+bar@icloud.com" becomes "foo@icloud.com").</li></ul>
+**rtrim(input [, chars])**             | trim characters from the right-side of the input.
+**stripLow(input [, keep_new_lines])** | remove characters with a numerical value < 32 and 127, mostly control characters. If `keep_new_lines` is `true`, newline characters are preserved (`\n` and `\r`, hex `0xA` and `0xD`). Unicode-safe in JavaScript.
+**toBoolean(input [, strict])**        | convert the input string to a boolean. Everything except for `'0'`, `'false'` and `''` returns `true`. In strict mode only `'1'` and `'true'` return `true`.
+**toDate(input)**                      | convert the input string to a date, or `null` if the input is not a date.
+**toFloat(input)**                     | convert the input string to a float, or `NaN` if the input is not a float.
+**toInt(input [, radix])**             | convert the input string to an integer, or `NaN` if the input is not an integer.
+**trim(input [, chars])**              | trim characters (whitespace by default) from both sides of the input.
+**unescape(input)**                    | replace HTML encoded entities with `<`, `>`, `&`, `'`, `"`, `` ` ``, `\` and `/`.
+**whitelist(input, chars)**            | remove characters that do not appear in the whitelist. The characters are used in a RegExp and so you will need to escape some chars, e.g. `whitelist(input, '\\[\\]')`.
 
-```html
-<!-- Append the `?module` param to load the module version of `web-vitals` -->
-<script type="module">
-  import {
-    onCLS,
-    onINP,
-    onLCP,
-  } from 'https://unpkg.com/web-vitals@4/dist/web-vitals.attribution.js?module';
+### XSS Sanitization
 
-  onCLS(console.log);
-  onINP(console.log);
-  onLCP(console.log);
-</script>
-```
+XSS sanitization was removed from the library in [2d5d6999](https://github.com/validatorjs/validator.js/commit/2d5d6999541add350fb396ef02dc42ca3215049e).
 
-**Load the "attribution" build** _(using a classic script)_
+For an alternative, have a look at Yahoo's [xss-filters library](https://github.com/yahoo/xss-filters) or at [DOMPurify](https://github.com/cure53/DOMPurify).
 
-```html
-<script>
-  (function () {
-    var script = document.createElement('script');
-    script.src =
-      'https://unpkg.com/web-vitals@4/dist/web-vitals.attribution.iife.js';
-    script.onload = function () {
-      // When loading `web-vitals` using a classic script, all the public
-      // methods can be found on the `webVitals` global namespace.
-      webVitals.onCLS(console.log);
-      webVitals.onINP(console.log);
-      webVitals.onLCP(console.log);
-    };
-    document.head.appendChild(script);
-  })();
-</script>
-```
+## Maintainers
 
-## Usage
+- [chriso](https://github.com/chriso) - **Chris O'Hara** (author)
+- [profnandaa](https://github.com/profnandaa) - **Anthony Nandaa**
+- [rubiin](https://github.com/rubiin) - **Rubin Bhandari**
+- [wikirik](https://github.com/wikirik) - **Rik Smale**
+- [ezkemboi](https://github.com/ezkemboi) - **Ezrqn Kemboi**
+- [tux-tn](https://github.com/tux-tn) - **Sarhan Aissi**
 
-### Basic usage
+## Reading
 
-Each of the Web Vitals metrics is exposed as a single function that takes a `callback` function that will be called any time the metric value is available and ready to be reported.
+Remember, validating can be troublesome sometimes. See [A list of articles about programming assumptions commonly made that aren't true](https://github.com/jameslk/awesome-falsehoods).
 
-The following example measures each of the Core Web Vitals metrics and logs the result to the console once its value is ready to report.
+## Contributing
 
-_(The examples below import the "standard" build, but they will work with the "attribution" build as well.)_
-
-```js
-import {onCLS, onINP, onLCP} from 'web-vitals';
-
-onCLS(console.log);
-onINP(console.log);
-onLCP(console.log);
-```
-
-Note that some of these metrics will not report until the user has interacted with the page, switched tabs, or the page starts to unload. If you don't see the values logged to the console immediately, try reloading the page (with [preserve log](https://developer.chrome.com/docs/devtools/console/reference/#persist) enabled) or switching tabs and then switching back.
-
-Also, in some cases a metric callback may never be called:
-
-- FID and INP are not reported if the user never interacts with the page.
-- CLS, FCP, FID, and LCP are not reported if the page was loaded in the background.
-
-In other cases, a metric callback may be called more than once:
-
-- CLS and INP should be reported any time the [page's `visibilityState` changes to hidden](https://developer.chrome.com/blog/page-lifecycle-api/#advice-hidden).
-- All metrics are reported again (with the above exceptions) after a page is restored from the [back/forward cache](https://web.dev/articles/bfcache).
-
-> [!WARNING]
-> Do not call any of the Web Vitals functions (e.g. `onCLS()`, `onINP()`, `onLCP()`) more than once per page load. Each of these functions creates a `PerformanceObserver` instance and registers event listeners for the lifetime of the page. While the overhead of calling these functions once is negligible, calling them repeatedly on the same page may eventually result in a memory leak.
-
-### Report the value on every change
-
-In most cases, you only want the `callback` function to be called when the metric is ready to be reported. However, it is possible to report every change (e.g. each larger layout shift as it happens) by setting `reportAllChanges` to `true` in the optional, [configuration object](#reportopts) (second parameter).
-
-> [!IMPORTANT]
-> `reportAllChanges` only reports when the **metric changes**, not for each **input to the metric**. For example, a new layout shift that does not increase the CLS metric will not be reported even with `reportAllChanges` set to `true` because the CLS metric has not changed. Similarly, for INP, each interaction is not reported even with `reportAllChanges` set to `true`—just when an interaction causes an increase to INP.
-
-This can be useful when debugging, but in general using `reportAllChanges` is not needed (or recommended) for measuring these metrics in production.
-
-```js
-import {onCLS} from 'web-vitals';
-
-// Logs CLS as the value changes.
-onCLS(console.log, {reportAllChanges: true});
-```
-
-### Report only the delta of changes
-
-Some analytics providers allow you to update the value of a metric, even after you've already sent it to their servers (overwriting the previously-sent value with the same `id`).
-
-Other analytics providers, however, do not allow this, so instead of reporting the new value, you need to report only the delta (the difference between the current value and the last-reported value). You can then compute the total value by summing all metric deltas sent with the same ID.
-
-The following example shows how to use the `id` and `delta` properties:
-
-```js
-import {onCLS, onINP, onLCP} from 'web-vitals';
-
-function logDelta({name, id, delta}) {
-  console.log(`${name} matching ID ${id} changed by ${delta}`);
-}
-
-onCLS(logDelta);
-onINP(logDelta);
-onLCP(logDelta);
-```
-
-> [!NOTE]
-> The first time the `callback` function is called, its `value` and `delta` properties will be the same.
-
-In addition to using the `id` field to group multiple deltas for the same metric, it can also be used to differentiate different metrics reported on the same page. For example, after a back/forward cache restore, a new metric object is created with a new `id` (since back/forward cache restores are considered separate page visits).
-
-### Send the results to an analytics endpoint
-
-The following example measures each of the Core Web Vitals metrics and reports them to a hypothetical `/analytics` endpoint, as soon as each is ready to be sent.
-
-The `sendToAnalytics()` function uses the [`navigator.sendBeacon()`](https://developer.mozilla.org/docs/Web/API/Navigator/sendBeacon) method (if available), but falls back to the [`fetch()`](https://developer.mozilla.org/docs/Web/API/Fetch_API) API when not.
-
-```js
-import {onCLS, onINP, onLCP} from 'web-vitals';
-
-function sendToAnalytics(metric) {
-  // Replace with whatever serialization method you prefer.
-  // Note: JSON.stringify will likely include more data than you need.
-  const body = JSON.stringify(metric);
-
-  // Use `navigator.sendBeacon()` if available, falling back to `fetch()`.
-  (navigator.sendBeacon && navigator.sendBeacon('/analytics', body)) ||
-    fetch('/analytics', {body, method: 'POST', keepalive: true});
-}
-
-onCLS(sendToAnalytics);
-onINP(sendToAnalytics);
-onLCP(sendToAnalytics);
-```
-
-### Send the results to Google Analytics
-
-Google Analytics does not support reporting metric distributions in any of its built-in reports; however, if you set a unique event parameter value (in this case, the metric_id, as shown in the example below) on every metric instance that you send to Google Analytics, you can create a report yourself by first getting the data via the [Google Analytics Data API](https://developers.google.com/analytics/devguides/reporting/data/v1) or via [BigQuery export](https://support.google.com/analytics/answer/9358801) and then visualizing it any charting library you choose.
-
-[Google Analytics 4](https://support.google.com/analytics/answer/10089681) introduces a new Event model allowing custom parameters instead of a fixed category, action, and label. It also supports non-integer values, making it easier to measure Web Vitals metrics compared to previous versions.
-
-```js
-import {onCLS, onINP, onLCP} from 'web-vitals';
-
-function sendToGoogleAnalytics({name, delta, value, id}) {
-  // Assumes the global `gtag()` function exists, see:
-  // https://developers.google.com/analytics/devguides/collection/ga4
-  gtag('event', name, {
-    // Built-in params:
-    value: delta, // Use `delta` so the value can be summed.
-    // Custom params:
-    metric_id: id, // Needed to aggregate events.
-    metric_value: value, // Optional.
-    metric_delta: delta, // Optional.
-
-    // OPTIONAL: any additional params or debug info here.
-    // See: https://web.dev/articles/debug-performance-in-the-field
-    // metric_rating: 'good' | 'needs-improvement' | 'poor',
-    // debug_info: '...',
-    // ...
-  });
-}
-
-onCLS(sendToGoogleAnalytics);
-onINP(sendToGoogleAnalytics);
-onLCP(sendToGoogleAnalytics);
-```
-
-For details on how to query this data in [BigQuery](https://cloud.google.com/bigquery), or visualise it in [Looker Studio](https://lookerstudio.google.com/), see [Measure and debug performance with Google Analytics 4 and BigQuery](https://web.dev/articles/vitals-ga4).
-
-### Send the results to Google Tag Manager
-
-While `web-vitals` can be called directly from Google Tag Manager, using a pre-defined custom template makes this considerably easier. Some recommended templates include:
-
-- [Core Web Vitals](https://tagmanager.google.com/gallery/#/owners/gtm-templates-simo-ahava/templates/core-web-vitals) by [Simo Ahava](https://www.simoahava.com/). See [Track Core Web Vitals in GA4 with Google Tag Manager](https://www.simoahava.com/analytics/track-core-web-vitals-in-ga4-with-google-tag-manager/) for usage and installation instructions.
-- [Web Vitals Template for Google Tag Manager](https://github.com/google-marketing-solutions/web-vitals-gtm-template) by The Google Marketing Solutions team. See the [README](https://github.com/google-marketing-solutions/web-vitals-gtm-template?tab=readme-ov-file#web-vitals-template-for-google-tag-manager) for usage and installation instructions.
-
-### Send attribution data
-
-When using the [attribution build](#attribution-build), you can send additional data to help you debug _why_ the metric values are they way they are.
-
-This example sends an additional `debug_target` param to Google Analytics, corresponding to the element most associated with each metric.
-
-```js
-import {onCLS, onINP, onLCP} from 'web-vitals/attribution';
-
-function sendToGoogleAnalytics({name, delta, value, id, attribution}) {
-  const eventParams = {
-    // Built-in params:
-    value: delta, // Use `delta` so the value can be summed.
-    // Custom params:
-    metric_id: id, // Needed to aggregate events.
-    metric_value: value, // Optional.
-    metric_delta: delta, // Optional.
-  };
-
-  switch (name) {
-    case 'CLS':
-      eventParams.debug_target = attribution.largestShiftTarget;
-      break;
-    case 'INP':
-      eventParams.debug_target = attribution.interactionTarget;
-      break;
-    case 'LCP':
-      eventParams.debug_target = attribution.element;
-      break;
-  }
-
-  // Assumes the global `gtag()` function exists, see:
-  // https://developers.google.com/analytics/devguides/collection/ga4
-  gtag('event', name, eventParams);
-}
-
-onCLS(sendToGoogleAnalytics);
-onINP(sendToGoogleAnalytics);
-onLCP(sendToGoogleAnalytics);
-```
-
-> [!NOTE]
-> This example relies on custom [event parameters](https://support.google.com/analytics/answer/11396839) in Google Analytics 4.
-
-See [Debug performance in the field](https://web.dev/articles/debug-performance-in-the-field) for more information and examples.
-
-### Batch multiple reports together
-
-Rather than reporting each individual Web Vitals metric separately, you can minimize your network usage by batching multiple metric reports together in a single network request.
-
-However, since not all Web Vitals metrics become available at the same time, and since not all metrics are reported on every page, you cannot simply defer reporting until all metrics are available.
-
-Instead, you should keep a queue of all metrics that were reported and flush the queue whenever the page is backgrounded or unloaded:
-
-```js
-import {onCLS, onINP, onLCP} from 'web-vitals';
-
-const queue = new Set();
-function addToQueue(metric) {
-  queue.add(metric);
-}
-
-function flushQueue() {
-  if (queue.size > 0) {
-    // Replace with whatever serialization method you prefer.
-    // Note: JSON.stringify will likely include more data than you need.
-    const body = JSON.stringify([...queue]);
-
-    // Use `navigator.sendBeacon()` if available, falling back to `fetch()`.
-    (navigator.sendBeacon && navigator.sendBeacon('/analytics', body)) ||
-      fetch('/analytics', {body, method: 'POST', keepalive: true});
-
-    queue.clear();
-  }
-}
-
-onCLS(addToQueue);
-onINP(addToQueue);
-onLCP(addToQueue);
-
-// Report all available metrics whenever the page is backgrounded or unloaded.
-addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden') {
-    flushQueue();
-  }
-});
-```
-
-> [!NOTE]
-> See [the Page Lifecycle guide](https://developers.google.com/web/updates/2018/07/page-lifecycle-api#legacy-lifecycle-apis-to-avoid) for an explanation of why `visibilitychange` is recommended over events like `beforeunload` and `unload`.
-
-<a name="bundle-versions"><a>
-
-## Build options
-
-The `web-vitals` package includes both "standard" and "attribution" builds, as well as different formats of each to allow developers to choose the format that best meets their needs or integrates with their architecture.
-
-The following table lists all the builds distributed with the `web-vitals` package on npm.
-
-<table>
-  <tr>
-    <td width="35%">
-      <strong>Filename</strong> <em>(all within <code>dist/*</code>)</em>
-    </td>
-    <td><strong>Export</strong></td>
-    <td><strong>Description</strong></td>
-  </tr>
-  <tr>
-    <td><code>web-vitals.js</code></td>
-    <td><code>pkg.module</code></td>
-    <td>
-      <p>An ES module bundle of all metric functions, without any attribution features.</p>
-      This is the "standard" build and is the simplest way to consume this library out of the box.
-    </td>
-  </tr>
-  <tr>
-    <td><code>web-vitals.umd.cjs</code></td>
-    <td><code>pkg.main</code></td>
-    <td>
-      A UMD version of the <code>web-vitals.js</code> bundle (exposed on the <code>self.webVitals.*</code> namespace).
-    </td>
-  </tr>
-  <tr>
-    <td><code>web-vitals.iife.js</code></td>
-    <td>--</td>
-    <td>
-      An IIFE version of the <code>web-vitals.js</code> bundle (exposed on the <code>self.webVitals.*</code> namespace).
-    </td>
-  </tr>
-  <tr>
-    <td><code>web-vitals.attribution.js</code></td>
-    <td>--</td>
-    <td>
-      An ES module version of all metric functions that includes <a href="#attribution-build">attribution</a> features.
-    </td>
-  </tr>
-    <tr>
-    <td><code>web-vitals.attribution.umd.cjs</code></td>
-    <td>--</td>
-    <td>
-      A UMD version of the <code>web-vitals.attribution.js</code> build (exposed on the <code>self.webVitals.*</code> namespace).
-    </td>
-  </tr>
-  </tr>
-    <tr>
-    <td><code>web-vitals.attribution.iife.js</code></td>
-    <td>--</td>
-    <td>
-      An IIFE version of the <code>web-vitals.attribution.js</code> build (exposed on the <code>self.webVitals.*</code> namespace).
-    </td>
-  </tr>
-</table>
-
-<a name="which-build-is-right-for-you"><a>
-
-### Which build is right for you?
-
-Most developers will generally want to use "standard" build (via either the ES module or UMD version, depending on your bundler/build system), as it's the easiest to use out of the box and integrate into existing tools.
-
-However, if you'd lke to collect additional debug information to help you diagnose performance bottlenecks based on real-user issues, use the ["attribution" build](#attribution-build).
-
-For guidance on how to collect and use real-user data to debug performance issues, see [Debug performance in the field](https://web.dev/debug-performance-in-the-field/).
-
-## API
-
-### Types:
-
-#### `Metric`
-
-All metrics types inherit from the following base interface:
-
-```ts
-interface Metric {
-  /**
-   * The name of the metric (in acronym form).
-   */
-  name: 'CLS' | 'FCP' | 'FID' | 'INP' | 'LCP' | 'TTFB';
-
-  /**
-   * The current value of the metric.
-   */
-  value: number;
-
-  /**
-   * The rating as to whether the metric value is within the "good",
-   * "needs improvement", or "poor" thresholds of the metric.
-   */
-  rating: 'good' | 'needs-improvement' | 'poor';
-
-  /**
-   * The delta between the current value and the last-reported value.
-   * On the first report, `delta` and `value` will always be the same.
-   */
-  delta: number;
-
-  /**
-   * A unique ID representing this particular metric instance. This ID can
-   * be used by an analytics tool to dedupe multiple values sent for the same
-   * metric instance, or to group multiple deltas together and calculate a
-   * total. It can also be used to differentiate multiple different metric
-   * instances sent from the same page, which can happen if the page is
-   * restored from the back/forward cache (in that case new metrics object
-   * get created).
-   */
-  id: string;
-
-  /**
-   * Any performance entries relevant to the metric value calculation.
-   * The array may also be empty if the metric value was not based on any
-   * entries (e.g. a CLS value of 0 given no layout shifts).
-   */
-  entries: PerformanceEntry[];
-
-  /**
-   * The type of navigation.
-   *
-   * This will be the value returned by the Navigation Timing API (or
-   * `undefined` if the browser doesn't support that API), with the following
-   * exceptions:
-   * - 'back-forward-cache': for pages that are restored from the bfcache.
-   * - 'back_forward' is renamed to 'back-forward' for consistency.
-   * - 'prerender': for pages that were prerendered.
-   * - 'restore': for pages that were discarded by the browser and then
-   * restored by the user.
-   */
-  navigationType:
-    | 'navigate'
-    | 'reload'
-    | 'back-forward'
-    | 'back-forward-cache'
-    | 'prerender'
-    | 'restore';
-}
-```
-
-Metric-specific subclasses:
-
-##### `CLSMetric`
-
-```ts
-interface CLSMetric extends Metric {
-  name: 'CLS';
-  entries: LayoutShift[];
-}
-```
-
-##### `FCPMetric`
-
-```ts
-interface FCPMetric extends Metric {
-  name: 'FCP';
-  entries: PerformancePaintTiming[];
-}
-```
-
-##### `FIDMetric`
-
-> [!CAUTION]
-> This interface is deprecated and will be removed in the next major release.
-
-```ts
-interface FIDMetric extends Metric {
-  name: 'FID';
-  entries: PerformanceEventTiming[];
-}
-```
-
-##### `INPMetric`
-
-```ts
-interface INPMetric extends Metric {
-  name: 'INP';
-  entries: PerformanceEventTiming[];
-}
-```
-
-##### `LCPMetric`
-
-```ts
-interface LCPMetric extends Metric {
-  name: 'LCP';
-  entries: LargestContentfulPaint[];
-}
-```
-
-##### `TTFBMetric`
-
-```ts
-interface TTFBMetric extends Metric {
-  name: 'TTFB';
-  entries: PerformanceNavigationTiming[];
-}
-```
-
-#### `MetricRatingThresholds`
-
-The thresholds of metric's "good", "needs improvement", and "poor" ratings.
-
-- Metric values up to and including [0] are rated "good"
-- Metric values up to and including [1] are rated "needs improvement"
-- Metric values above [1] are "poor"
-
-| Metric value    | Rating              |
-| --------------- | ------------------- |
-| ≦ [0]           | "good"              |
-| > [0] and ≦ [1] | "needs improvement" |
-| > [1]           | "poor"              |
-
-```ts
-type MetricRatingThresholds = [number, number];
-```
-
-_See also [Rating Thresholds](#rating-thresholds)._
-
-#### `ReportOpts`
-
-```ts
-interface ReportOpts {
-  reportAllChanges?: boolean;
-  durationThreshold?: number;
-}
-```
-
-#### `LoadState`
-
-The `LoadState` type is used in several of the metric [attribution objects](#attribution).
-
-```ts
-/**
- * The loading state of the document. Note: this value is similar to
- * `document.readyState` but it subdivides the "interactive" state into the
- * time before and after the DOMContentLoaded event fires.
- *
- * State descriptions:
- * - `loading`: the initial document response has not yet been fully downloaded
- *   and parsed. This is equivalent to the corresponding `readyState` value.
- * - `dom-interactive`: the document has been fully loaded and parsed, but
- *   scripts may not have yet finished loading and executing.
- * - `dom-content-loaded`: the document is fully loaded and parsed, and all
- *   scripts (except `async` scripts) have loaded and finished executing.
- * - `complete`: the document and all of its sub-resources have finished
- *   loading. This is equivalent to the corresponding `readyState` value.
- */
-type LoadState =
-  | 'loading'
-  | 'dom-interactive'
-  | 'dom-content-loaded'
-  | 'complete';
-```
-
-### Functions:
-
-#### `onCLS()`
-
-```ts
-function onCLS(callback: (metric: CLSMetric) => void, opts?: ReportOpts): void;
-```
-
-Calculates the [CLS](https://web.dev/articles/cls) value for the current page and calls the `callback` function once the value is ready to be reported, along with all `layout-shift` performance entries that were used in the metric value calculation. The reported value is a [double](https://heycam.github.io/webidl/#idl-double) (corresponding to a [layout shift score](https://web.dev/articles/cls#layout_shift_score)).
-
-If the `reportAllChanges` [configuration option](#reportopts) is set to `true`, the `callback` function will be called as soon as the value is initially determined as well as any time the value changes throughout the page lifespan (Note [not necessarily for every layout shift](#report-the-value-on-every-change)).
-
-> [!IMPORTANT]
-> CLS should be continually monitored for changes throughout the entire lifespan of a page—including if the user returns to the page after it's been hidden/backgrounded. However, since browsers often [will not fire additional callbacks once the user has backgrounded a page](https://developer.chrome.com/blog/page-lifecycle-api/#advice-hidden), `callback` is always called when the page's visibility state changes to hidden. As a result, the `callback` function might be called multiple times during the same page load (see [Reporting only the delta of changes](#report-only-the-delta-of-changes) for how to manage this).
-
-#### `onFCP()`
-
-```ts
-function onFCP(callback: (metric: FCPMetric) => void, opts?: ReportOpts): void;
-```
-
-Calculates the [FCP](https://web.dev/articles/fcp) value for the current page and calls the `callback` function once the value is ready, along with the relevant `paint` performance entry used to determine the value. The reported value is a [`DOMHighResTimeStamp`](https://developer.mozilla.org/docs/Web/API/DOMHighResTimeStamp).
-
-#### `onFID()`
-
-> [!CAUTION]
-> This function is deprecated and will be removed in the next major release.
-
-```ts
-function onFID(callback: (metric: FIDMetric) => void, opts?: ReportOpts): void;
-```
-
-Calculates the [FID](https://web.dev/articles/fid) value for the current page and calls the `callback` function once the value is ready, along with the relevant `first-input` performance entry used to determine the value. The reported value is a [`DOMHighResTimeStamp`](https://developer.mozilla.org/docs/Web/API/DOMHighResTimeStamp).
-
-> [!IMPORTANT]
-> Since FID is only reported after the user interacts with the page, it's possible that it will not be reported for some page loads.
-
-#### `onINP()`
-
-```ts
-function onINP(callback: (metric: INPMetric) => void, opts?: ReportOpts): void;
-```
-
-Calculates the [INP](https://web.dev/articles/inp) value for the current page and calls the `callback` function once the value is ready, along with the `event` performance entries reported for that interaction. The reported value is a [`DOMHighResTimeStamp`](https://developer.mozilla.org/docs/Web/API/DOMHighResTimeStamp).
-
-A custom `durationThreshold` [configuration option](#reportopts) can optionally be passed to control what `event-timing` entries are considered for INP reporting. The default threshold is `40`, which means INP scores of less than 40 are reported as 0. Note that this will not affect your 75th percentile INP value unless that value is also less than 40 (well below the recommended [good](https://web.dev/articles/inp#what_is_a_good_inp_score) threshold).
-
-If the `reportAllChanges` [configuration option](#reportopts) is set to `true`, the `callback` function will be called as soon as the value is initially determined as well as any time the value changes throughout the page lifespan (Note [not necessarily for every interaction](#report-the-value-on-every-change)).
-
-> [!IMPORTANT]
-> INP should be continually monitored for changes throughout the entire lifespan of a page—including if the user returns to the page after it's been hidden/backgrounded. However, since browsers often [will not fire additional callbacks once the user has backgrounded a page](https://developer.chrome.com/blog/page-lifecycle-api/#advice-hidden), `callback` is always called when the page's visibility state changes to hidden. As a result, the `callback` function might be called multiple times during the same page load (see [Reporting only the delta of changes](#report-only-the-delta-of-changes) for how to manage this).
-
-#### `onLCP()`
-
-```ts
-function onLCP(callback: (metric: LCPMetric) => void, opts?: ReportOpts): void;
-```
-
-Calculates the [LCP](https://web.dev/articles/lcp) value for the current page and calls the `callback` function once the value is ready (along with the relevant `largest-contentful-paint` performance entry used to determine the value). The reported value is a [`DOMHighResTimeStamp`](https://developer.mozilla.org/docs/Web/API/DOMHighResTimeStamp).
-
-If the `reportAllChanges` [configuration option](#reportopts) is set to `true`, the `callback` function will be called any time a new `largest-contentful-paint` performance entry is dispatched, or once the final value of the metric has been determined.
-
-#### `onTTFB()`
-
-```ts
-function onTTFB(
-  callback: (metric: TTFBMetric) => void,
-  opts?: ReportOpts,
-): void;
-```
-
-Calculates the [TTFB](https://web.dev/articles/ttfb) value for the current page and calls the `callback` function once the page has loaded, along with the relevant `navigation` performance entry used to determine the value. The reported value is a [`DOMHighResTimeStamp`](https://developer.mozilla.org/docs/Web/API/DOMHighResTimeStamp).
-
-Note, this function waits until after the page is loaded to call `callback` in order to ensure all properties of the `navigation` entry are populated. This is useful if you want to report on other metrics exposed by the [Navigation Timing API](https://w3c.github.io/navigation-timing/).
-
-For example, the TTFB metric starts from the page's [time origin](https://www.w3.org/TR/hr-time-2/#sec-time-origin), which means it includes time spent on DNS lookup, connection negotiation, network latency, and server processing time.
-
-```js
-import {onTTFB} from 'web-vitals';
-
-onTTFB((metric) => {
-  // Calculate the request time by subtracting from TTFB
-  // everything that happened prior to the request starting.
-  const requestTime = metric.value - metric.entries[0].requestStart;
-  console.log('Request time:', requestTime);
-});
-```
-
-> [!NOTE]
-> Browsers that do not support `navigation` entries will fall back to using `performance.timing` (with the timestamps converted from epoch time to [`DOMHighResTimeStamp`](https://developer.mozilla.org/docs/Web/API/DOMHighResTimeStamp)). This ensures code referencing these values (like in the example above) will work the same in all browsers.
-
-### Rating Thresholds:
-
-The thresholds of each metric's "good", "needs improvement", and "poor" ratings are available as [`MetricRatingThresholds`](#metricratingthresholds).
-
-Example:
-
-```ts
-import {CLSThresholds, INPThresholds, LCPThresholds} from 'web-vitals';
-
-console.log(CLSThresholds); // [ 0.1, 0.25 ]
-console.log(INPThresholds); // [ 200, 500 ]
-console.log(LCPThresholds); // [ 2500, 4000 ]
-```
-
-> [!NOTE]
-> It's typically not necessary (or recommended) to manually calculate metric value ratings using these thresholds. Use the [`Metric['rating']`](#metric) instead.
-
-### Attribution:
-
-The following objects contain potentially-helpful debugging information that can be sent along with the metric values for the current page visit in order to help identify issues happening to real-users in the field.
-
-When using the attribution build, these objects are found as an `attribution` property on each metric.
-
-See the [attribution build](#attribution-build) section for details on how to use this feature.
-
-#### `CLSAttribution`
-
-```ts
-interface CLSAttribution {
-  /**
-   * A selector identifying the first element (in document order) that
-   * shifted when the single largest layout shift contributing to the page's
-   * CLS score occurred.
-   */
-  largestShiftTarget?: string;
-  /**
-   * The time when the single largest layout shift contributing to the page's
-   * CLS score occurred.
-   */
-  largestShiftTime?: DOMHighResTimeStamp;
-  /**
-   * The layout shift score of the single largest layout shift contributing to
-   * the page's CLS score.
-   */
-  largestShiftValue?: number;
-  /**
-   * The `LayoutShiftEntry` representing the single largest layout shift
-   * contributing to the page's CLS score. (Useful when you need more than just
-   * `largestShiftTarget`, `largestShiftTime`, and `largestShiftValue`).
-   */
-  largestShiftEntry?: LayoutShift;
-  /**
-   * The first element source (in document order) among the `sources` list
-   * of the `largestShiftEntry` object. (Also useful when you need more than
-   * just `largestShiftTarget`, `largestShiftTime`, and `largestShiftValue`).
-   */
-  largestShiftSource?: LayoutShiftAttribution;
-  /**
-   * The loading state of the document at the time when the largest layout
-   * shift contribution to the page's CLS score occurred (see `LoadState`
-   * for details).
-   */
-  loadState?: LoadState;
-}
-```
-
-#### `FCPAttribution`
-
-```ts
-interface FCPAttribution {
-  /**
-   * The time from when the user initiates loading the page until when the
-   * browser receives the first byte of the response (a.k.a. TTFB).
-   */
-  timeToFirstByte: number;
-  /**
-   * The delta between TTFB and the first contentful paint (FCP).
-   */
-  firstByteToFCP: number;
-  /**
-   * The loading state of the document at the time when FCP `occurred (see
-   * `LoadState` for details). Ideally, documents can paint before they finish
-   * loading (e.g. the `loading` or `dom-interactive` phases).
-   */
-  loadState: LoadState;
-  /**
-   * The `PerformancePaintTiming` entry corresponding to FCP.
-   */
-  fcpEntry?: PerformancePaintTiming;
-  /**
-   * The `navigation` entry of the current page, which is useful for diagnosing
-   * general page load issues. This can be used to access `serverTiming` for example:
-   * navigationEntry?.serverTiming
-   */
-  navigationEntry?: PerformanceNavigationTiming;
-}
-```
-
-#### `FIDAttribution`
-
-> [!CAUTION]
-> This interface is deprecated and will be removed in the next major release.
-
-```ts
-interface FIDAttribution {
-  /**
-   * A selector identifying the element that the user interacted with. This
-   * element will be the `target` of the `event` dispatched.
-   */
-  eventTarget: string;
-  /**
-   * The time when the user interacted. This time will match the `timeStamp`
-   * value of the `event` dispatched.
-   */
-  eventTime: number;
-  /**
-   * The `type` of the `event` dispatched from the user interaction.
-   */
-  eventType: string;
-  /**
-   * The `PerformanceEventTiming` entry corresponding to FID.
-   */
-  eventEntry: PerformanceEventTiming;
-  /**
-   * The loading state of the document at the time when the first interaction
-   * occurred (see `LoadState` for details). If the first interaction occurred
-   * while the document was loading and executing script (e.g. usually in the
-   * `dom-interactive` phase) it can result in long input delays.
-   */
-  loadState: LoadState;
-}
-```
-
-#### `INPAttribution`
-
-```ts
-interface INPAttribution {
-  /**
-   * A selector identifying the element that the user first interacted with
-   * as part of the frame where the INP candidate interaction occurred.
-   * If this value is an empty string, that generally means the element was
-   * removed from the DOM after the interaction.
-   */
-  interactionTarget: string;
-  /**
-   * A reference to the HTML element identified by `interactionTarget`.
-   * NOTE: for attribution purpose, a selector identifying the element is
-   * typically more useful than the element itself. However, the element is
-   * also made available in case additional context is needed.
-   */
-  interactionTargetElement: Node | undefined;
-  /**
-   * The time when the user first interacted during the frame where the INP
-   * candidate interaction occurred (if more than one interaction occurred
-   * within the frame, only the first time is reported).
-   */
-  interactionTime: DOMHighResTimeStamp;
-  /**
-   * The best-guess timestamp of the next paint after the interaction.
-   * In general, this timestamp is the same as the `startTime + duration` of
-   * the event timing entry. However, since `duration` values are rounded to
-   * the nearest 8ms, it can sometimes appear that the paint occurred before
-   * processing ended (which cannot happen). This value clamps the paint time
-   * so it's always after `processingEnd` from the Event Timing API and
-   * `renderStart` from the Long Animation Frame API (where available).
-   * It also averages the duration values for all entries in the same
-   * animation frame, which should be closer to the "real" value.
-   */
-  nextPaintTime: DOMHighResTimeStamp;
-  /**
-   * The type of interaction, based on the event type of the `event` entry
-   * that corresponds to the interaction (i.e. the first `event` entry
-   * containing an `interactionId` dispatched in a given animation frame).
-   * For "pointerdown", "pointerup", or "click" events this will be "pointer",
-   * and for "keydown" or "keyup" events this will be "keyboard".
-   */
-  interactionType: 'pointer' | 'keyboard';
-  /**
-   * An array of Event Timing entries that were processed within the same
-   * animation frame as the INP candidate interaction.
-   */
-  processedEventEntries: PerformanceEventTiming[];
-  /**
-   * If the browser supports the Long Animation Frame API, this array will
-   * include any `long-animation-frame` entries that intersect with the INP
-   * candidate interaction's `startTime` and the `processingEnd` time of the
-   * last event processed within that animation frame. If the browser does not
-   * support the Long Animation Frame API or no `long-animation-frame` entries
-   * are detect, this array will be empty.
-   */
-  longAnimationFrameEntries: PerformanceLongAnimationFrameTiming[];
-  /**
-   * The time from when the user interacted with the page until when the
-   * browser was first able to start processing event listeners for that
-   * interaction. This time captures the delay before event processing can
-   * begin due to the main thread being busy with other work.
-   */
-  inputDelay: number;
-  /**
-   * The time from when the first event listener started running in response to
-   * the user interaction until when all event listener processing has finished.
-   */
-  processingDuration: number;
-  /**
-   * The time from when the browser finished processing all event listeners for
-   * the user interaction until the next frame is presented on the screen and
-   * visible to the user. This time includes work on the main thread (such as
-   * `requestAnimationFrame()` callbacks, `ResizeObserver` and
-   * `IntersectionObserver` callbacks, and style/layout calculation) as well
-   * as off-main-thread work (such as compositor, GPU, and raster work).
-   */
-  presentationDelay: number;
-  /**
-   * The loading state of the document at the time when the interaction
-   * corresponding to INP occurred (see `LoadState` for details). If the
-   * interaction occurred while the document was loading and executing script
-   * (e.g. usually in the `dom-interactive` phase) it can result in long delays.
-   */
-  loadState: LoadState;
-}
-```
-
-#### `LCPAttribution`
-
-```ts
-interface LCPAttribution {
-  /**
-   * The element corresponding to the largest contentful paint for the page.
-   */
-  element?: string;
-  /**
-   * The URL (if applicable) of the LCP image resource. If the LCP element
-   * is a text node, this value will not be set.
-   */
-  url?: string;
-  /**
-   * The time from when the user initiates loading the page until when the
-   * browser receives the first byte of the response (a.k.a. TTFB). See
-   * [Optimize LCP](https://web.dev/articles/optimize-lcp) for details.
-   */
-  timeToFirstByte: number;
-  /**
-   * The delta between TTFB and when the browser starts loading the LCP
-   * resource (if there is one, otherwise 0). See [Optimize
-   * LCP](https://web.dev/articles/optimize-lcp) for details.
-   */
-  resourceLoadDelay: number;
-  /**
-   * The total time it takes to load the LCP resource itself (if there is one,
-   * otherwise 0). See [Optimize LCP](https://web.dev/articles/optimize-lcp) for
-   * details.
-   */
-  resourceLoadDuration: number;
-  /**
-   * The delta between when the LCP resource finishes loading until the LCP
-   * element is fully rendered. See [Optimize
-   * LCP](https://web.dev/articles/optimize-lcp) for details.
-   */
-  elementRenderDelay: number;
-  /**
-   * The `navigation` entry of the current page, which is useful for diagnosing
-   * general page load issues. This can be used to access `serverTiming` for example:
-   * navigationEntry?.serverTiming
-   */
-  navigationEntry?: PerformanceNavigationTiming;
-  /**
-   * The `resource` entry for the LCP resource (if applicable), which is useful
-   * for diagnosing resource load issues.
-   */
-  lcpResourceEntry?: PerformanceResourceTiming;
-  /**
-   * The `LargestContentfulPaint` entry corresponding to LCP.
-   */
-  lcpEntry?: LargestContentfulPaint;
-}
-```
-
-#### `TTFBAttribution`
-
-```ts
-export interface TTFBAttribution {
-  /**
-   * The total time from when the user initiates loading the page to when the
-   * page starts to handle the request. Large values here are typically due
-   * to HTTP redirects, though other browser processing contributes to this
-   * duration as well (so even without redirect it's generally not zero).
-   */
-  waitingDuration: number;
-  /**
-   * The total time spent checking the HTTP cache for a match. For navigations
-   * handled via service worker, this duration usually includes service worker
-   * start-up time as well as time processing `fetch` event listeners, with
-   * some exceptions, see: https://github.com/w3c/navigation-timing/issues/199
-   */
-  cacheDuration: number;
-  /**
-   * The total time to resolve the DNS for the requested domain.
-   */
-  dnsDuration: number;
-  /**
-   * The total time to create the connection to the requested domain.
-   */
-  connectionDuration: number;
-  /**
-   * The total time from when the request was sent until the first byte of the
-   * response was received. This includes network time as well as server
-   * processing time.
-   */
-  requestDuration: number;
-  /**
-   * The `navigation` entry of the current page, which is useful for diagnosing
-   * general page load issues. This can be used to access `serverTiming` for
-   * example: navigationEntry?.serverTiming
-   */
-  navigationEntry?: PerformanceNavigationTiming;
-}
-```
-
-## Browser Support
-
-The `web-vitals` code has been tested and will run without error in all major browsers as well as Internet Explorer back to version 9. However, some of the APIs required to capture these metrics are currently only available in Chromium-based browsers (e.g. Chrome, Edge, Opera, Samsung Internet).
-
-Browser support for each function is as follows:
-
-- `onCLS()`: Chromium
-- `onFCP()`: Chromium, Firefox, Safari
-- `onFID()`: Chromium, Firefox _(Deprecated)_
-- `onINP()`: Chromium
-- `onLCP()`: Chromium, Firefox
-- `onTTFB()`: Chromium, Firefox, Safari
-
-## Limitations
-
-The `web-vitals` library is primarily a wrapper around the Web APIs that measure the Web Vitals metrics, which means the limitations of those APIs will mostly apply to this library as well. More details on these limitations is available in [this blog post](https://web.dev/articles/crux-and-rum-differences).
-
-The primary limitation of these APIs is they have no visibility into `<iframe>` content (not even same-origin iframes), which means pages that make use of iframes will likely see a difference between the data measured by this library and the data available in the Chrome User Experience Report (which does include iframe content).
-
-For same-origin iframes, it's possible to use the `web-vitals` library to measure metrics, but it's tricky because it requires the developer to add the library to every frame and `postMessage()` the results to the parent frame for aggregation.
-
-> [!NOTE]
-> Given the lack of iframe support, the `onCLS()` function technically measures [DCLS](https://github.com/wicg/layout-instability#cumulative-scores) (Document Cumulative Layout Shift) rather than CLS, if the page includes iframes).
-
-## Development
-
-### Building the code
-
-The `web-vitals` source code is written in TypeScript. To transpile the code and build the production bundles, run the following command.
-
-```sh
-npm run build
-```
-
-To build the code and watch for changes, run:
-
-```sh
-npm run watch
-```
-
-### Running the tests
-
-The `web-vitals` code is tested in real browsers using [webdriver.io](https://webdriver.io/). Use the following command to run the tests:
-
-```sh
-npm test
-```
-
-To test any of the APIs manually, you can start the test server
-
-```sh
-npm run test:server
-```
-
-Then navigate to `http://localhost:9090/test/<view>`, where `<view>` is the basename of one the templates under [/test/views/](/test/views/).
-
-You'll likely want to combine this with `npm run watch` to ensure any changes you make are transpiled and rebuilt.
-
-## Integrations
-
-- [**Web Vitals Connector**](https://goo.gle/web-vitals-connector): Data Studio connector to create dashboards from [Web Vitals data captured in BiqQuery](https://web.dev/articles/vitals-ga4).
-- [**Core Web Vitals Custom Tag template**](https://www.simoahava.com/custom-templates/core-web-vitals/): Custom GTM template tag to [add measurement handlers](https://www.simoahava.com/analytics/track-core-web-vitals-in-ga4-with-google-tag-manager/) for all Core Web Vitals metrics.
-- [**`web-vitals-reporter`**](https://github.com/treosh/web-vitals-reporter): JavaScript library to batch `callback` functions and send data with a single request.
+We welcome contributions from the community! If you're interested in contributing to this project, please read our [Contribution Guide](CONTRIBUTING.md) to get started.
 
 ## License
 
-[Apache 2.0](/LICENSE)
+This project is licensed under the [MIT](LICENSE). See the [LICENSE](LICENSE) file for details.
+
+[downloads-image]: http://img.shields.io/npm/dm/validator.svg
+
+[npm-url]: https://npmjs.org/package/validator
+[npm-image]: http://img.shields.io/npm/v/validator.svg
+
+[codecov-url]: https://codecov.io/gh/validatorjs/validator.js
+[codecov-image]: https://codecov.io/gh/validatorjs/validator.js/branch/master/graph/badge.svg
+
+[ci-url]: https://github.com/validatorjs/validator.js/actions?query=workflow%3ACI
+[ci-image]: https://github.com/validatorjs/validator.js/workflows/CI/badge.svg?branch=master
+
+[gitter-url]: https://gitter.im/validatorjs/community
+[gitter-image]: https://badges.gitter.im/validatorjs/community.svg
+
+[huntr-url]: https://huntr.dev/bounties/disclose/?target=https://github.com/validatorjs/validator.js
+[huntr-image]: https://cdn.huntr.dev/huntr_security_badge_mono.svg
+
+[amd]: http://requirejs.org/docs/whyamd.html
+[bower]: http://bower.io/
+
+[Crockford Base32]: http://www.crockford.com/base32.html
+[Base64 URL Safe]: https://base64.guru/standards/base64url
+[Data URI Format]: https://developer.mozilla.org/en-US/docs/Web/HTTP/data_URIs
+[European Article Number]: https://en.wikipedia.org/wiki/International_Article_Number
+[Ethereum]: https://ethereum.org/
+[CSS Colors Level 4 Specification]: https://developer.mozilla.org/en-US/docs/Web/CSS/color_value
+[IMEI]: https://en.wikipedia.org/wiki/International_Mobile_Equipment_Identity
+[ISBN]: https://en.wikipedia.org/wiki/ISBN
+[ISIN]: https://en.wikipedia.org/wiki/International_Securities_Identification_Number
+[ISO 639-1]: https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+[ISO 8601]: https://en.wikipedia.org/wiki/ISO_8601
+[ISO 15924]: https://en.wikipedia.org/wiki/ISO_15924
+[ISO 3166-1 alpha-2]: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+[ISO 3166-1 alpha-3]: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-3
+[ISO 3166-1 numeric]: https://en.wikipedia.org/wiki/ISO_3166-1_numeric
+[ISO 4217]: https://en.wikipedia.org/wiki/ISO_4217
+[ISRC]: https://en.wikipedia.org/wiki/International_Standard_Recording_Code
+[ISSN]: https://en.wikipedia.org/wiki/International_Standard_Serial_Number
+[Luhn Check]: https://en.wikipedia.org/wiki/Luhn_algorithm
+[Magnet URI Format]: https://en.wikipedia.org/wiki/Magnet_URI_scheme
+[Mailto URI Format]: https://en.wikipedia.org/wiki/Mailto
+[MIME Type]: https://en.wikipedia.org/wiki/Media_type
+[mongoid]: http://docs.mongodb.org/manual/reference/object-id/
+[RFC 3339]: https://tools.ietf.org/html/rfc3339
+[VAT Number]: https://en.wikipedia.org/wiki/VAT_identification_number
