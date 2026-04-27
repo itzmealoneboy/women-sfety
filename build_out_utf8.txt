@@ -1,0 +1,123 @@
+﻿
+> sakhi-app@0.0.0 build
+> vite build
+
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 396 modules transformed.
+node.exe : [31mx[39m 
+Build failed in 2.66s
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: ([31mx[39m B   
+ uild failed in 2.6    
+6s:String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+[31merror during 
+build:
+[31msrc/services/fireb
+asees/auth.js (17:9): 
+"app" is not exported 
+by "src/config/firebase
+s.js", imported by "src
+/services/firebasees/au
+th.js".[31m
+file: [36mC:/Users/ara
+vi/Pictures/women 
+safety projects/src/ser
+vices/firebasees/auth.j
+s:17:9[31m
+[33m
+15:   
+sendEmailVerification
+16: } from 
+'firebase/auth';
+17: import { app } 
+from '../../config/fire
+bases';
+             ^
+18: 
+19: const auth = 
+getAuth(app);
+[31m
+    at getRollupError (
+file:///C:/Users/aravi/
+Pictures/women%20safety
+%20projects/node_module
+s/rollup/dist/es/shared
+/parseAst.js:406:41)
+    at error (file:///C
+:/Users/aravi/Pictures/
+women%20safety%20projec
+ts/node_modules/rollup/
+dist/es/shared/parseAst
+.js:402:42)
+    at Module.error (fi
+le:///C:/Users/aravi/Pi
+ctures/women%20safety%2
+0projects/node_modules/
+rollup/dist/es/shared/n
+ode-entry.js:17065:16)
+    at 
+Module.traceVariable (f
+ile:///C:/Users/aravi/P
+ictures/women%20safety%
+20projects/node_modules
+/rollup/dist/es/shared/
+node-entry.js:17477:29)
+    at ModuleScope.find
+Variable (file:///C:/Us
+ers/aravi/Pictures/wome
+n%20safety%20projects/n
+ode_modules/rollup/dist
+/es/shared/node-entry.j
+s:15090:39)
+    at Identifier.bind 
+(file:///C:/Users/aravi
+/Pictures/women%20safet
+y%20projects/node_modul
+es/rollup/dist/es/share
+d/node-entry.js:5450:40
+)
+    at 
+CallExpression.bind (fi
+le:///C:/Users/aravi/Pi
+ctures/women%20safety%2
+0projects/node_modules/
+rollup/dist/es/shared/n
+ode-entry.js:2828:28)
+    at 
+CallExpression.bind (fi
+le:///C:/Users/aravi/Pi
+ctures/women%20safety%2
+0projects/node_modules/
+rollup/dist/es/shared/n
+ode-entry.js:12199:15)
+    at VariableDeclarat
+or.bind (file:///C:/Use
+rs/aravi/Pictures/women
+%20safety%20projects/no
+de_modules/rollup/dist/
+es/shared/node-entry.js
+:2832:23)
+    at VariableDeclarat
+ion.bind (file:///C:/Us
+ers/aravi/Pictures/wome
+n%20safety%20projects/n
+ode_modules/rollup/dist
+/es/shared/node-entry.j
+s:2828:28)[39m

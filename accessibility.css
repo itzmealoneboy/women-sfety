@@ -1,0 +1,265 @@
+/* Accessibility Styles */
+
+/* High Contrast Mode */
+.high-contrast {
+  --primary-color: #ffff00 !important;
+  --secondary-color: #ff00ff !important;
+  --success-color: #00ff00 !important;
+  --danger-color: #ff0000 !important;
+  --warning-color: #ffaa00 !important;
+  --text-color: #ffffff !important;
+  --background-color: #000000 !important;
+  --border-color: #ffffff !important;
+}
+
+.high-contrast * {
+  border-color: #ffffff !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.high-contrast a {
+  color: #ffff00 !important;
+  text-decoration: underline !important;
+}
+
+.high-contrast button {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border: 2px solid #ffff00 !important;
+}
+
+/* Large Text Mode */
+.large-text {
+  font-size: 18px !important;
+}
+
+.large-text h1 { font-size: 2.5em !important; }
+.large-text h2 { font-size: 2em !important; }
+.large-text h3 { font-size: 1.75em !important; }
+.large-text h4 { font-size: 1.5em !important; }
+.large-text p { font-size: 1.2em !important; }
+.large-text button { font-size: 1.2em !important; }
+.large-text input { font-size: 1.2em !important; }
+
+/* Reduce Motion */
+.reduce-motion * {
+  animation-duration: 0.001s !important;
+  transition-duration: 0.001s !important;
+}
+
+/* Dyslexia Friendly Font */
+.dyslexia-friendly {
+  font-family: 'OpenDyslexic', 'Comic Sans MS', sans-serif !important;
+  line-height: 1.5 !important;
+  letter-spacing: 0.05em !important;
+}
+
+/* Color Blind Modes */
+.protanopia {
+  filter: url('#protanopia') !important;
+}
+
+.deuteranopia {
+  filter: url('#deuteranopia') !important;
+}
+
+.tritanopia {
+  filter: url('#tritanopia') !important;
+}
+
+/* Focus Indicator */
+.show-focus *:focus {
+  outline: 3px solid #ff00ff !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 4px rgba(255, 0, 255, 0.3) !important;
+}
+
+.keyboard-navigation *:focus {
+  outline: 3px solid #00ff00 !important;
+}
+
+/* Skip Link */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  z-index: 100;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* Screen Reader Only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* Accessibility Menu */
+.accessibility-menu-button {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #667eea;
+  color: white;
+  font-size: 24px;
+  border: none;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+.accessibility-menu-button:hover {
+  transform: scale(1.1);
+}
+
+.accessibility-menu {
+  position: fixed;
+  bottom: 80px;
+  left: 20px;
+  width: 300px;
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  z-index: 1000;
+  display: none;
+}
+
+.accessibility-menu.visible {
+  display: block;
+}
+
+.accessibility-menu h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.accessibility-option {
+  margin-bottom: 12px;
+}
+
+.accessibility-option label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.accessibility-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.accessibility-option select {
+  width: 100%;
+  padding: 6px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.accessibility-option input[type="range"] {
+  width: 100%;
+  margin: 8px 0;
+}
+
+.reset-button,
+.close-button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.reset-button {
+  background: #ff4757;
+  color: white;
+}
+
+.close-button {
+  background: #f0f0f0;
+  color: #333;
+}
+
+/* Focus Mode */
+.focus-mode .sidebar,
+.focus-mode .navbar,
+.focus-mode .fab,
+.focus-mode .accessibility-menu-button {
+  display: none !important;
+}
+
+.focus-mode main {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ARIA Landmarks */
+[role="main"] {
+  outline: none;
+}
+
+[role="navigation"] {
+  outline: none;
+}
+
+/* Keyboard Navigation Help */
+.keyboard-shortcuts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 14px;
+  z-index: 1000;
+  display: none;
+}
+
+.keyboard-shortcuts.visible {
+  display: block;
+}
+
+.keyboard-shortcuts h4 {
+  margin: 0 0 10px 0;
+  color: #ff0;
+}
+
+.keyboard-shortcuts ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.keyboard-shortcuts li {
+  margin: 5px 0;
+}
+
+.keyboard-shortcuts kbd {
+  background: #333;
+  border: 1px solid #666;
+  border-radius: 3px;
+  padding: 2px 5px;
+  margin-right: 5px;
+}

@@ -1,0 +1,70 @@
+﻿
+> sakhi-app@0.0.0 build
+> vite build
+
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 14 modules transformed.
+node.exe : [31mx[39m 
+Build failed in 2.16s
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo 
+...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+~~
+    + CategoryInfo     
+         : 
+NotSpecified: (    
+[31mx[39m Build fail  
+  ed in 2.16s:String) 
+[    ], RemoteException
+    + 
+FullyQualifiedError    
+Id : NativeCommandErr  
+  or
+ 
+[31merror during 
+build:
+[31mCould not resolve 
+"./pages/media/aimisuse
+detection" from 
+"src/app.jsx"[31m
+file: [36mC:/Users/DEL
+L/Downloads/main 
+projects/women safety p
+rojects/src/app.jsx[31
+m
+    at getRollupError (
+file:///C:/Users/DELL/D
+ownloads/main%20project
+s/women%20safety%20proj
+ects/node_modules/rollu
+p/dist/es/shared/parseA
+st.js:406:41)
+    at error (file:///C
+:/Users/DELL/Downloads/
+main%20projects/women%2
+0safety%20projects/node
+_modules/rollup/dist/es
+/shared/parseAst.js:402
+:42)
+    at ModuleLoader.han
+dleInvalidResolvedId (f
+ile:///C:/Users/DELL/Do
+wnloads/main%20projects
+/women%20safety%20proje
+cts/node_modules/rollup
+/dist/es/shared/node-en
+try.js:21765:24)
+    at file:///C:/Users
+/DELL/Downloads/main%20
+projects/women%20safety
+%20projects/node_module
+s/rollup/dist/es/shared
+/node-entry.js:21725:26
+[39m
